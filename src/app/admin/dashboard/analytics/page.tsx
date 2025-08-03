@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Views</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                {analyticsData.totalViews.toLocaleString()}
+                {analyticsData?.totalViews?.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
                 <TrendingUp className="w-4 h-4 mr-1" />
@@ -239,7 +239,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                {analyticsData.totalUsers.toLocaleString()}
+                {analyticsData?.totalUsers?.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
                 <TrendingUp className="w-4 h-4 mr-1" />
@@ -262,7 +262,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Blogs</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                {analyticsData.totalBlogs}
+                {analyticsData?.totalBlogs || '0'}
               </p>
               <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center mt-1">
                 <Activity className="w-4 h-4 mr-1" />
@@ -354,12 +354,12 @@ export default function AnalyticsPage() {
                       {blog.title}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {blog.views.toLocaleString()} views
+                      {blog.views?.toLocaleString() || '0'} views
                     </p>
                   </div>
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {Math.round((blog.views / analyticsData.totalViews) * 100)}%
+                  {analyticsData?.totalViews ? Math.round((blog.views / analyticsData.totalViews) * 100) : 0}%
                 </div>
               </div>
             ))}
@@ -388,11 +388,11 @@ export default function AnalyticsPage() {
                 <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
                     className="bg-blue-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.deviceStats.desktop}%` }}
+                    style={{ width: `${analyticsData?.deviceStats?.desktop || 0}%` }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.deviceStats.desktop}%
+                  {analyticsData?.deviceStats?.desktop || 0}%
                 </span>
               </div>
             </div>
@@ -405,11 +405,11 @@ export default function AnalyticsPage() {
                 <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
                     className="bg-green-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.deviceStats.mobile}%` }}
+                    style={{ width: `${analyticsData?.deviceStats?.mobile || 0}%` }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.deviceStats.mobile}%
+                  {analyticsData?.deviceStats?.mobile || 0}%
                 </span>
               </div>
             </div>
@@ -422,11 +422,11 @@ export default function AnalyticsPage() {
                 <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
                     className="bg-purple-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.deviceStats.tablet}%` }}
+                    style={{ width: `${analyticsData?.deviceStats?.tablet || 0}%` }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.deviceStats.tablet}%
+                  {analyticsData?.deviceStats?.tablet || 0}%
                 </span>
               </div>
             </div>

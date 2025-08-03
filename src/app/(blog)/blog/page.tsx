@@ -1,12 +1,11 @@
 import BlogCard from "@/components/BlogCard";
+import { headers } from "next/headers";
 
 async function getBaseUrl() {
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  }
-  
-  // For production, you might want to use your actual domain
-  return process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.com';
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  return `${protocol}://${host}`;
 }
 
 async function getBlogs() {

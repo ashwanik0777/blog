@@ -118,7 +118,9 @@ export default function NewsletterPage() {
     try {
       const response = await fetch('/api/admin/newsletter/newsletters', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(newsletterForm),
       });
 
@@ -140,7 +142,7 @@ export default function NewsletterPage() {
   async function handleSendNewsletter(newsletterId: string) {
     try {
       const response = await fetch(`/api/admin/newsletter/newsletters/${newsletterId}/send`, {
-        method: 'POST',
+        method: 'POST'
       });
 
       if (response.ok) {
@@ -160,7 +162,9 @@ export default function NewsletterPage() {
     try {
       const response = await fetch('/api/admin/newsletter/subscribers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(subscriberForm),
       });
 
@@ -184,7 +188,7 @@ export default function NewsletterPage() {
 
     try {
       const response = await fetch(`/api/admin/newsletter/subscribers/${subscriberId}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       });
 
       if (response.ok) {
@@ -202,7 +206,7 @@ export default function NewsletterPage() {
   async function handleToggleSubscription(subscriber: Subscriber) {
     try {
       const response = await fetch(`/api/admin/newsletter/subscribers/${subscriber._id}/toggle`, {
-        method: 'PATCH',
+        method: 'PATCH'
       });
 
       if (response.ok) {
@@ -467,7 +471,7 @@ export default function NewsletterPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                        {new Date(subscriber.subscribedAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

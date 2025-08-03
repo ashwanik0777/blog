@@ -460,7 +460,7 @@ export default function AdminDashboard() {
                         {blog.views || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'N/A'}
+                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">

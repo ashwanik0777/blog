@@ -3,76 +3,80 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  LayoutDashboard, 
-  FileText, 
-  Bot, 
-  MessageSquare, 
-  Mail, 
-  BarChart3, 
-  Settings, 
-  Users, 
-  UserPlus,
-  X,
-  Menu
-} from "lucide-react";
+  FaTachometerAlt,
+  FaBlog,
+  FaChartLine,
+  FaNewspaper,
+  FaUsers,
+  FaFlask,
+  FaCogs,
+  FaChevronLeft,
+  FaChevronRight,
+  FaSignOutAlt,
+  FaUserShield,
+  FaUser,
+} from "react-icons/fa";
 
 interface AdminSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const menuItems = [
   {
     name: 'Dashboard',
     href: '/admin/dashboard',
-    icon: LayoutDashboard,
-    description: 'Overview and statistics'
+    icon: FaTachometerAlt,
+    description: 'Overview and statistics',
+    color: 'text-purple-400'
   },
   {
     name: 'Blog Management',
     href: '/admin/dashboard/blogs',
-    icon: FileText,
-    description: 'Create, edit, and manage blogs'
-  },
-  {
-    name: 'AI Content',
-    href: '/admin/dashboard/ai-content',
-    icon: Bot,
-    description: 'AI content generation tools'
-  },
-  {
-    name: 'Comments',
-    href: '/admin/dashboard/comments',
-    icon: MessageSquare,
-    description: 'Manage user comments'
-  },
-  {
-    name: 'Newsletter',
-    href: '/admin/dashboard/newsletter',
-    icon: Mail,
-    description: 'Newsletter subscribers'
+    icon: FaBlog,
+    description: 'Create, edit, and manage blogs',
+    color: 'text-blue-400'
   },
   {
     name: 'Analytics',
     href: '/admin/dashboard/analytics',
-    icon: BarChart3,
-    description: 'Website analytics and insights'
+    icon: FaChartLine,
+    description: 'Website analytics and insights',
+    color: 'text-green-400'
+  },
+  {
+    name: 'Newsletter',
+    href: '/admin/dashboard/newsletter',
+    icon: FaNewspaper,
+    description: 'Newsletter subscribers',
+    color: 'text-orange-400'
   },
   {
     name: 'User Management',
     href: '/admin/dashboard/users',
-    icon: Users,
-    description: 'Manage users and sub-admins'
+    icon: FaUsers,
+    description: 'Manage users and sub-admins',
+    color: 'text-cyan-400'
+  },
+  {
+    name: 'AI Content',
+    href: '/admin/dashboard/ai-content',
+    icon: FaFlask,
+    description: 'AI content generation tools',
+    color: 'text-yellow-400'
   },
   {
     name: 'Settings',
     href: '/admin/dashboard/settings',
-    icon: Settings,
-    description: 'Website configuration'
+    icon: FaCogs,
+    description: 'Website configuration',
+    color: 'text-red-400'
   }
 ];
 
-export default function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
+export default function AdminSidebar({ isOpen, onToggle, isCollapsed = false, onToggleCollapse }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -87,82 +91,127 @@ export default function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-lg z-50 transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 shadow-2xl z-50 transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto
-        w-64 border-r border-gray-200 dark:border-gray-700
+        ${isCollapsed ? 'w-16' : 'w-64'} border-r border-gray-700
       `}>
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className={`${isCollapsed ? "p-2" : "p-4"} border-b border-gray-800`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <LayoutDashboard className="w-5 h-5 text-white" />
+            {!isCollapsed && (
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                  <FaTachometerAlt className="h-5 w-5 text-white" />
+                </div>
+                <h1 className="text-lg font-bold text-white">Admin Panel</h1>
               </div>
-              <h1 className="text-xl font-bold text-white">
-                Admin Panel
-              </h1>
-            </div>
+            )}
             <button
-              onClick={onToggle}
-              className="lg:hidden text-white/80 hover:text-white transition-colors"
+              onClick={onToggleCollapse}
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
-              <X className="w-5 h-5" />
+              {isCollapsed ? (
+                <FaChevronRight className="h-4 w-4 text-gray-400" />
+              ) : (
+                <FaChevronLeft className="h-4 w-4 text-gray-400" />
+              )}
             </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
-            const IconComponent = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' 
-                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:text-gray-300 dark:hover:from-gray-700 dark:hover:to-gray-600'
-                  }
-                `}
-                onClick={() => {
-                  // Close sidebar on mobile after clicking
-                  if (window.innerWidth < 1024) {
-                    onToggle();
-                  }
-                }}
-              >
-                <div className={`
-                  p-2 rounded-lg transition-all duration-200
-                  ${isActive 
-                    ? 'bg-white/20' 
-                    : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/20'
-                  }
-                `}>
-                  <IconComponent className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`} />
-                </div>
-                                         <div className="flex-1">
-                           <div className="font-semibold">{item.name}</div>
-                         </div>
-                {isActive && (
-                  <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
-                )}
-              </Link>
-            );
-          })}
+        <nav className={`flex-1 overflow-y-auto py-4 ${isCollapsed ? "px-1" : "px-2"}`}>
+          <div className="space-y-1">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              const IconComponent = item.icon;
+              
+              if (isCollapsed) {
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => {
+                      if (window.innerWidth < 1024) {
+                        onToggle();
+                      }
+                    }}
+                    className={`w-full flex items-center justify-center p-3 text-left transition-colors duration-200 rounded group relative ${
+                      isActive ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    }`}
+                    title={item.name}
+                  >
+                    <IconComponent className={`h-5 w-5 ${isActive ? "text-white" : `${item.color} group-hover:text-white`}`} />
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 rounded group ${
+                    isActive ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
+                      onToggle();
+                    }
+                  }}
+                >
+                  <IconComponent className={`h-4 w-4 mr-3 ${isActive ? "text-white" : `${item.color} group-hover:text-white`}`} />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
-          <div className="text-xs text-gray-600 dark:text-gray-400 text-center font-medium">
-            Gemini AI Blog Admin
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 text-center mt-1">
-            v2.0.0
-          </div>
+        {/* User Profile Section */}
+        <div className="border-t border-gray-800 p-4">
+          {!isCollapsed ? (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mr-3">
+                    <FaUserShield className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-white">Admin User</h3>
+                    <p className="text-xs text-gray-400">Administrator</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    // Handle logout
+                    localStorage.clear();
+                    window.location.href = "/admin";
+                  }}
+                  className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
+                  title="Logout"
+                >
+                  <FaSignOutAlt className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center space-y-2">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+                <FaUserShield className="h-4 w-4 text-white" />
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.href = "/admin";
+                }}
+                className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
+                title="Logout"
+              >
+                <FaSignOutAlt className="h-4 w-4 text-gray-400 group-hover:text-white" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

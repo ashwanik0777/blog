@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('admin-token');
+    const token = cookieStore.get('next-auth.session-token');
 
     if (!token) {
       return NextResponse.json({ error: 'No session' }, { status: 401 });
@@ -19,9 +19,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       user: {
-        id: decoded.userId,
+        id: decoded.sub,
         email: decoded.email,
-        role: decoded.role
+        role: decoded.role,
+        name: decoded.name,
+        accessToken: token.value
       }
     });
   } catch (error) {

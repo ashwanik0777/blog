@@ -27,15 +27,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Create a simple session token
+    // Create a JWT token compatible with NextAuth
     const token = sign(
       { 
-        userId: user._id, 
+        sub: user._id.toString(),
         email: user.email, 
-        role: user.role 
+        role: user.role,
+        name: user.name,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
       },
-      process.env.NEXTAUTH_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
+      process.env.NEXTAUTH_SECRET || 'fallback-secret'
     );
 
     const response = NextResponse.json({ 
@@ -45,8 +47,8 @@ export async function POST(req: Request) {
       email: user.email
     });
 
-    // Set cookie
-    response.cookies.set('admin-token', token, {
+    // Set NextAuth session cookie
+    response.cookies.set('next-auth.session-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

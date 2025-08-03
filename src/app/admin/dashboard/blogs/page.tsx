@@ -396,7 +396,7 @@ export default function BlogManagementPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'N/A'}
+                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

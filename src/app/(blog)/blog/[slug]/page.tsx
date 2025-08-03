@@ -1,6 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import { Metadata } from "next";
+import Comments from "@/components/Comments";
 
 async function getBlog(slug: string) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/blog/${slug}`, { cache: 'no-store' });
@@ -66,7 +67,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
       <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
         <span>By {blog.author?.name || "Unknown"}</span>
-        <span>• {new Date(blog.createdAt).toLocaleDateString()}</span>
+                        <span>• {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
       </div>
       {blog.featuredImage && (
         <img src={blog.featuredImage} alt={blog.title} className="rounded w-full h-64 object-cover mb-4" />
@@ -84,6 +85,9 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
           <span key={cat} className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">{cat}</span>
         ))}
       </div>
+      
+      {/* Comments Section */}
+      <Comments blogId={blog._id} />
     </main>
   );
 } 

@@ -42,7 +42,7 @@ export default function BlogCard({ blog }: { blog: any }) {
             <img src={blog.author.image} alt={blog.author.name} className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
           )}
           <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">By {blog.author?.name || "Unknown"}</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">• {new Date(blog.createdAt).toLocaleDateString()}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">• {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
           <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold ml-auto">
             {blog.readingTime || getReadingTime(blog.content)} min read
           </span>

@@ -72,7 +72,7 @@ export default function AdminBlogTable({ blogs, onEdit, onDelete, onBulkAction }
                   <span className="text-yellow-600">Draft</span>
                 )}
               </td>
-              <td className="px-4 py-2 text-sm text-gray-500">{new Date(blog.createdAt).toLocaleDateString()}</td>
+                              <td className="px-4 py-2 text-sm text-gray-500">{new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</td>
               <td className="px-4 py-2 flex gap-2">
                 <button
                   className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
