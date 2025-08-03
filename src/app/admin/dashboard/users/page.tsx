@@ -46,6 +46,7 @@ export default function UserManagementPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'sub-admins'>('users');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -215,7 +216,10 @@ export default function UserManagementPage() {
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && !user.disabled) ||
                          (filterStatus === 'inactive' && user.disabled);
-    return matchesSearch && matchesRole && matchesStatus;
+    const matchesTab = activeTab === 'users' ? 
+                      (user.role === 'reader' || user.role === 'editor') :
+                      (user.role === 'admin' || user.role === 'sub-admin');
+    return matchesSearch && matchesRole && matchesStatus && matchesTab;
   });
 
   if (checkingAuth) {
@@ -323,50 +327,86 @@ export default function UserManagementPage() {
         </motion.div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+      {/* Tabs */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="flex space-x-8 px-6">
+            <button 
+              onClick={() => setActiveTab('users')}
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'users'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="sub-admin">Sub-Admin</option>
-              <option value="editor">Editor</option>
-              <option value="reader">Reader</option>
-            </select>
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+              Users ({users.filter(u => u.role === 'reader' || u.role === 'editor').length})
+            </button>
+            <button 
+              onClick={() => setActiveTab('sub-admins')}
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'sub-admins'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              Sub-Admins ({users.filter(u => u.role === 'admin' || u.role === 'sub-admin').length})
+            </button>
+          </nav>
+        </div>
+
+        {/* Filters */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="w-full pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+              >
+                <option value="all">All Roles</option>
+                {activeTab === 'users' ? (
+                  <>
+                    <option value="editor">Editor</option>
+                    <option value="reader">Reader</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="admin">Admin</option>
+                    <option value="sub-admin">Sub-Admin</option>
+                  </>
+                )}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Users Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="p-6">
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -485,13 +525,14 @@ export default function UserManagementPage() {
         )}
       </div>
 
-      {filteredUsers.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 text-lg">No users found</p>
-          <p className="text-gray-400 dark:text-gray-500">Create your first user to get started</p>
+                {filteredUsers.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No {activeTab === 'users' ? 'users' : 'sub-admins'} found</p>
+              <p className="text-gray-400 dark:text-gray-500">Create your first {activeTab === 'users' ? 'user' : 'sub-admin'} to get started</p>
+            </div>
+          )}
         </div>
-      )}
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingUser) && (

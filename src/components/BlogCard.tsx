@@ -24,22 +24,43 @@ export default function BlogCard({ blog }: { blog: any }) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {blog.featured && (
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+            ⭐ Featured
+          </div>
+        )}
       </div>
       <div className="p-4 flex flex-col flex-1">
         <Link href={`/blog/${blog.slug}`} className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline line-clamp-2 mb-2 transition-colors">
           {blog.title}
         </Link>
-        <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-2 mb-3 flex-1 leading-relaxed">{blog.summary}</p>
+        <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-2 mb-3 flex-1 leading-relaxed">
+          {blog.excerpt || blog.summary}
+        </p>
         <div className="flex items-center gap-2 mt-2 mb-3">
           {blog.author?.image && (
             <img src={blog.author.image} alt={blog.author.name} className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
           )}
           <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">By {blog.author?.name || "Unknown"}</span>
           <span className="text-xs text-gray-500 dark:text-gray-400">• {new Date(blog.createdAt).toLocaleDateString()}</span>
-          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold ml-auto">{getReadingTime(blog.content)} min read</span>
+          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold ml-auto">
+            {blog.readingTime || getReadingTime(blog.content)} min read
+          </span>
         </div>
         <div className="flex flex-wrap gap-1 mb-3">
-          {blog.tags?.map((tag: string, i: number) => (
+          {blog.categories?.slice(0, 2).map((category: string, i: number) => (
+            <motion.span
+              key={category}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + i * 0.05, type: "spring", stiffness: 200 }}
+              whileHover={{ scale: 1.12, boxShadow: "0 0 8px #10b98144" }}
+              className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all hover:bg-green-200 dark:hover:bg-green-800"
+            >
+              {category}
+            </motion.span>
+          ))}
+          {blog.tags?.slice(0, 3).map((tag: string, i: number) => (
             <motion.span
               key={tag}
               initial={{ opacity: 0, x: -10 }}

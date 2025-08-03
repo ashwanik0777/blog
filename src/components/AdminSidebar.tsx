@@ -62,13 +62,7 @@ const menuItems = [
     name: 'User Management',
     href: '/admin/dashboard/users',
     icon: Users,
-    description: 'Manage users and roles'
-  },
-  {
-    name: 'Sub-Admins',
-    href: '/admin/dashboard/sub-admins',
-    icon: UserPlus,
-    description: 'Create and manage sub-admins'
+    description: 'Manage users and sub-admins'
   },
   {
     name: 'Settings',
@@ -150,12 +144,9 @@ export default function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                 `}>
                   <IconComponent className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`} />
                 </div>
-                <div className="flex-1">
-                  <div className="font-semibold">{item.name}</div>
-                  <div className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {item.description}
-                  </div>
-                </div>
+                                         <div className="flex-1">
+                           <div className="font-semibold">{item.name}</div>
+                         </div>
                 {isActive && (
                   <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
                 )}
