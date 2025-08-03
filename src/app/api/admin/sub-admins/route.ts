@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import dbConnect from '../../../../lib/mongodb';
-import User from '../../../../models/User';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
 export async function GET(req: Request) {
@@ -22,13 +22,16 @@ export async function GET(req: Request) {
 
     await dbConnect();
     
-    // Get all users
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    // Get all sub-admins (users with role 'sub-admin' or 'admin')
+    const subAdmins = await User.find({ 
+      role: { $in: ['sub-admin', 'admin'] },
+      email: { $ne: decoded.email } // Exclude current user
+    }).select('-password');
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ subAdmins });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    console.error('Error fetching sub-admins:', error);
+    return NextResponse.json({ error: 'Failed to fetch sub-admins' }, { status: 500 });
   }
 }
 
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { name, email, password, role } = await req.json();
+    const { name, email, password, role, permissions } = await req.json();
 
     if (!name || !email || !password || !role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -64,25 +67,24 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user
-    const user = new User({
+    // Create new sub-admin
+    const subAdmin = new User({
       name,
       email,
       password: hashedPassword,
       role,
+      permissions: permissions || [],
       disabled: false
     });
 
-    await user.save();
+    await subAdmin.save();
 
     // Return user without password
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    const { password: _, ...userWithoutPassword } = subAdmin.toObject();
 
     return NextResponse.json(userWithoutPassword);
   } catch (error) {
-    console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    console.error('Error creating sub-admin:', error);
+    return NextResponse.json({ error: 'Failed to create sub-admin' }, { status: 500 });
   }
-}
-
- 
+} 

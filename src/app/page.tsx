@@ -24,11 +24,11 @@ export default async function Home() {
    <>
    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
       {/* Navbar */}
-      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 shadow-sm sticky top-0 z-40 backdrop-blur">
-        <Link href="/" className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">Gemini AI Blog</Link>
-        <div className="flex gap-4">
-          <Link href="/blog" className="text-blue-600 hover:underline font-medium">Blogs</Link>
-          <Link href="/login" className="text-gray-700 dark:text-gray-200 hover:underline">Login</Link>
+      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 shadow-md sticky top-0 z-40 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+        <Link href="/" className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text hover:scale-105 transition-transform">Gemini AI Blog</Link>
+        <div className="flex gap-6">
+          <Link href="/blog" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors">Blogs</Link>
+          <Link href="/admin" className="text-gray-800 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline font-medium transition-colors">Admin</Link>
         </div>
       </nav>
       {/* Hero Section */}
@@ -38,67 +38,67 @@ export default async function Home() {
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text drop-shadow-lg">
             Gemini AI Blog
           </h1>
-          <p className="text-lg md:text-2xl text-gray-700 dark:text-gray-300 mb-6 max-w-2xl">
+          <p className="text-lg md:text-2xl text-gray-800 dark:text-gray-100 mb-6 max-w-2xl font-medium">
             The most modern, AI-powered, SEO-optimized blogging platform. Discover, create, and learn with the power of Google Gemini.
           </p>
           <Link href="/blog" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-700 transition mb-4">
             Explore Blogs
           </Link>
-          <span className="text-gray-500 dark:text-gray-400 text-sm">Or subscribe for updates:</span>
+          <span className="text-gray-700 dark:text-gray-200 text-base font-semibold mb-2">Or subscribe for updates:</span>
           <NewsletterForm />
         </div>
       </section>
       {/* Features Section */}
       <section className="max-w-5xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-8 text-center">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center gap-2">
-          <span className="text-3xl">🤖</span>
-          <h3 className="font-bold text-lg">AI-Powered Content</h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Generate, summarize, and enhance blogs with Google Gemini AI. Get instant suggestions and summaries as you write.</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 border border-gray-100 dark:border-gray-700">
+          <span className="text-4xl">🤖</span>
+          <h3 className="font-bold text-xl text-gray-900 dark:text-white">AI-Powered Content</h3>
+          <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">Generate, summarize, and enhance blogs with Google Gemini AI. Get instant suggestions and summaries as you write.</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center gap-2">
-          <span className="text-3xl">🚀</span>
-          <h3 className="font-bold text-lg">SEO & Analytics</h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Automatic meta tags, sitemap, robots.txt, and Google Analytics integration for top search rankings and insights.</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 border border-gray-100 dark:border-gray-700">
+          <span className="text-4xl">🚀</span>
+          <h3 className="font-bold text-xl text-gray-900 dark:text-white">SEO & Analytics</h3>
+          <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">Automatic meta tags, sitemap, robots.txt, and Google Analytics integration for top search rankings and insights.</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center gap-2">
-          <span className="text-3xl">💬</span>
-          <h3 className="font-bold text-lg">Live AI Chatbot</h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Ask questions, get blog suggestions, and interact with Gemini AI in real time. Always available, always learning.</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 border border-gray-100 dark:border-gray-700">
+          <span className="text-4xl">💬</span>
+          <h3 className="font-bold text-xl text-gray-900 dark:text-white">Live AI Chatbot</h3>
+          <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">Ask questions, get blog suggestions, and interact with Gemini AI in real time. Always available, always learning.</p>
         </div>
       </section>
       {/* Latest Blogs Preview */}
       <section className="max-w-5xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">Latest Blogs</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Latest Blogs</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {latestBlogs.length === 0 ? (
-            <div className="col-span-3 text-gray-500 text-center">No blogs found.</div>
+            <div className="col-span-3 text-gray-600 dark:text-gray-400 text-center text-lg">No blogs found.</div>
           ) : (
             latestBlogs.map((blog: any) => <BlogCard key={blog._id} blog={blog} />)
           )}
         </div>
-        <div className="flex justify-center mt-6">
-          <Link href="/blog" className="text-blue-600 underline font-medium">View all blogs &rarr;</Link>
+        <div className="flex justify-center mt-8">
+          <Link href="/blog" className="text-blue-600 hover:text-blue-700 underline font-semibold text-lg transition-colors">View all blogs &rarr;</Link>
         </div>
       </section>
       {/* Testimonials Section */}
       <section className="max-w-4xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">What Our Users Say</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">What Our Users Say</h2>
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <p className="text-gray-700 dark:text-gray-300 italic mb-2">“Gemini AI Blog helped me write and publish my first article in minutes. The AI suggestions are a game changer!”</p>
-            <span className="font-semibold text-blue-600">— Priya S., Content Creator</span>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+            <p className="text-gray-800 dark:text-gray-200 italic mb-4 text-lg leading-relaxed">"Gemini AI Blog helped me write and publish my first article in minutes. The AI suggestions are a game changer!"</p>
+            <span className="font-semibold text-blue-600 text-lg">— Priya S., Content Creator</span>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <p className="text-gray-700 dark:text-gray-300 italic mb-2">“The analytics and SEO tools are top notch. My blog traffic doubled in a month!”</p>
-            <span className="font-semibold text-blue-600">— Alex R., Blogger</span>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+            <p className="text-gray-800 dark:text-gray-200 italic mb-4 text-lg leading-relaxed">"The analytics and SEO tools are top notch. My blog traffic doubled in a month!"</p>
+            <span className="font-semibold text-blue-600 text-lg">— Alex R., Blogger</span>
           </div>
         </div>
       </section>
       {/* Footer */}
       <footer className="bg-gray-100 dark:bg-gray-900 py-8 mt-12 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-4xl mx-auto px-4 text-center text-gray-500 dark:text-gray-400">
-          <div className="mb-2">&copy; {new Date().getFullYear()} Gemini AI Blog. All rights reserved.</div>
-          <div className="text-xs">Built with Next.js, Tailwind CSS, MongoDB, and Google Gemini AI.</div>
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="mb-2 text-gray-700 dark:text-gray-300 font-medium">&copy; {new Date().getFullYear()} Gemini AI Blog. All rights reserved.</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Built with Next.js, Tailwind CSS, MongoDB, and Google Gemini AI.</div>
         </div>
       </footer>
     </main>

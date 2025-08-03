@@ -16,8 +16,24 @@ export async function PUT(req: Request, { params }: { params: { slug: string } }
   if (!token || token.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const data = await req.json();
-  const blog = await Blog.findOneAndUpdate({ slug: params.slug }, data, { new: true });
+  const body = await req.json();
+  
+  const blog = await Blog.findOneAndUpdate(
+    { slug: params.slug },
+    {
+      title: body.title,
+      slug: body.slug,
+      content: body.content,
+      summary: body.summary,
+      tags: body.tags,
+      categories: body.categories,
+      featuredImage: body.featuredImage,
+      published: body.published,
+      status: body.published ? 'approved' : 'draft'
+    },
+    { new: true }
+  );
+  
   if (!blog) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(blog);
 }

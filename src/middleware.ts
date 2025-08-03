@@ -1,25 +1,14 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  const isAdminRoute = req.nextUrl.pathname.startsWith('/(admin)') || req.nextUrl.pathname.startsWith('/dashboard');
-
-  if (isAdminRoute) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-    if (token.role !== 'admin') {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-  }
+export function middleware(request: NextRequest) {
+  // For now, let all admin routes pass through
+  // Authentication is handled by the individual pages
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    '/(admin)/:path*',
-    '/dashboard/:path*',
+    '/admin/dashboard/:path*',
   ],
 }; 

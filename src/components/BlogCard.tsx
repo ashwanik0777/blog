@@ -26,17 +26,17 @@ export default function BlogCard({ blog }: { blog: any }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <Link href={`/blog/${blog.slug}`} className="text-xl font-bold hover:underline line-clamp-2 mb-1">
+        <Link href={`/blog/${blog.slug}`} className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline line-clamp-2 mb-2 transition-colors">
           {blog.title}
         </Link>
-        <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-2 flex-1">{blog.summary}</p>
-        <div className="flex items-center gap-2 mt-2 mb-2">
+        <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-2 mb-3 flex-1 leading-relaxed">{blog.summary}</p>
+        <div className="flex items-center gap-2 mt-2 mb-3">
           {blog.author?.image && (
             <img src={blog.author.image} alt={blog.author.name} className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
           )}
-          <span className="text-xs text-gray-500">By {blog.author?.name || "Unknown"}</span>
-          <span className="text-xs text-gray-400">• {new Date(blog.createdAt).toLocaleDateString()}</span>
-          <span className="text-xs text-blue-500 ml-auto">{getReadingTime(blog.content)} min read</span>
+          <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">By {blog.author?.name || "Unknown"}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">• {new Date(blog.createdAt).toLocaleDateString()}</span>
+          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold ml-auto">{getReadingTime(blog.content)} min read</span>
         </div>
         <div className="flex flex-wrap gap-1 mb-3">
           {blog.tags?.map((tag: string, i: number) => (
@@ -46,7 +46,7 @@ export default function BlogCard({ blog }: { blog: any }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 + i * 0.05, type: "spring", stiffness: 200 }}
               whileHover={{ scale: 1.12, boxShadow: "0 0 8px #2563eb44" }}
-              className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs cursor-pointer transition-all"
+              className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all hover:bg-blue-200 dark:hover:bg-blue-800"
             >
               #{tag}
             </motion.span>
@@ -54,7 +54,7 @@ export default function BlogCard({ blog }: { blog: any }) {
         </div>
         <Link
           href={`/blog/${blog.slug}`}
-          className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition"
+          className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
         >
           Read more
         </Link>

@@ -33,13 +33,13 @@ export default function NewsletterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 items-center max-w-md mx-auto mt-8">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 items-center max-w-md mx-auto mt-4">
       <motion.input
         type="email"
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="Your email address"
-        className="flex-1 p-2 border rounded"
+        className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
         required
         disabled={loading}
         animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : { x: 0 }}
@@ -47,9 +47,9 @@ export default function NewsletterForm() {
       />
       <motion.button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
-        whileHover={{ scale: 1.07, boxShadow: "0 0 0 4px #2563eb22" }}
-        whileTap={{ scale: 0.97 }}
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+        whileHover={{ scale: 1.05, boxShadow: "0 0 0 4px #2563eb22" }}
+        whileTap={{ scale: 0.98 }}
         disabled={loading}
       >
         {loading ? (
@@ -74,7 +74,7 @@ export default function NewsletterForm() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-green-600 text-sm mt-2 w-full text-center"
+            className="text-green-600 dark:text-green-400 text-sm font-medium mt-3 w-full text-center"
           >
             {success}
           </motion.div>
@@ -85,7 +85,7 @@ export default function NewsletterForm() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-red-500 text-sm mt-2 w-full text-center"
+            className="text-red-600 dark:text-red-400 text-sm font-medium mt-3 w-full text-center"
           >
             {error}
           </motion.div>

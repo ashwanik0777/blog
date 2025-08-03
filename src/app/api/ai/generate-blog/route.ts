@@ -10,9 +10,16 @@ export async function POST(req: Request) {
   if (!title && !keywords) {
     return NextResponse.json({ error: 'Missing title or keywords' }, { status: 400 });
   }
+
+  // Get API key from environment or request
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.' }, { status: 500 });
+  }
+
   // Call Gemini API
   const prompt = `Generate a detailed, SEO-optimized blog post.\nTitle: ${title}\nKeywords: ${keywords || ''}\nReturn JSON with fields: content (markdown), summary, tags (array), categories (array).`;
-  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY, {
+  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),

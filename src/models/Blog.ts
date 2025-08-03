@@ -5,6 +5,9 @@ export interface IBlog extends Document {
   slug: string;
   content: string;
   summary?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
   tags: string[];
   categories: string[];
   author: mongoose.Types.ObjectId;
@@ -16,6 +19,17 @@ export interface IBlog extends Document {
   status: string;
   flaggedReason?: string;
   moderationNotes?: string;
+  readingTime?: number;
+  excerpt?: string;
+  tableOfContents?: string[];
+  internalLinks?: string[];
+  externalLinks?: string[];
+  relatedPosts?: mongoose.Types.ObjectId[];
+  socialShareEnabled?: boolean;
+  commentsEnabled?: boolean;
+  seoOptimized?: boolean;
+  featured?: boolean;
+  priority?: number;
 }
 
 const BlogSchema = new Schema<IBlog>({
@@ -23,6 +37,9 @@ const BlogSchema = new Schema<IBlog>({
   slug: { type: String, required: true, unique: true },
   content: { type: String, required: true },
   summary: { type: String },
+  metaTitle: { type: String },
+  metaDescription: { type: String },
+  keywords: [{ type: String }],
   tags: [{ type: String }],
   categories: [{ type: String }],
   author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -34,6 +51,17 @@ const BlogSchema = new Schema<IBlog>({
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'flagged'], default: 'approved' },
   flaggedReason: { type: String },
   moderationNotes: { type: String },
+  readingTime: { type: Number },
+  excerpt: { type: String },
+  tableOfContents: [{ type: String }],
+  internalLinks: [{ type: String }],
+  externalLinks: [{ type: String }],
+  relatedPosts: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
+  socialShareEnabled: { type: Boolean, default: true },
+  commentsEnabled: { type: Boolean, default: true },
+  seoOptimized: { type: Boolean, default: false },
+  featured: { type: Boolean, default: false },
+  priority: { type: Number, default: 0 },
 }, { timestamps: true });
 
 export default models.Blog || model<IBlog>('Blog', BlogSchema);
