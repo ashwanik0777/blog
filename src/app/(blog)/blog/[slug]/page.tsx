@@ -9,9 +9,10 @@ async function getBlog(slug: string) {
   return res.json();
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
   try {
-    const blog = await getBlog(params.slug);
+    const blog = await getBlog(slug);
     const url = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/blog/${blog.slug}`;
     return {
       title: blog.title,
@@ -38,10 +39,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
+export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   let blog;
   try {
-    blog = await getBlog(params.slug);
+    blog = await getBlog(slug);
   } catch (e) {
     return <div className="p-8 text-center text-red-500">Blog not found.</div>;
   }
@@ -90,4 +92,4 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
       <Comments blogId={blog._id} />
     </main>
   );
-} 
+}
