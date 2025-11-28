@@ -20,32 +20,41 @@ import {
 interface AnalyticsData {
   totalViews: number;
   totalBlogs: number;
+  publishedBlogs: number;
   totalUsers: number;
   totalSubscribers: number;
+  totalIssues: number;
+  pendingIssues: number;
+  uniqueVisitors: number;
+  totalPageViews: number;
+  uniqueIPs: number;
   viewsByDay: { [date: string]: number };
+  visitorsByDay: { [date: string]: number };
   topBlogs: Array<{
     title: string;
     views: number;
     slug: string;
   }>;
+  topPages: Array<{
+    page: string;
+    views: number;
+  }>;
   userGrowth: Array<{
     date: string;
     users: number;
-  }>;
-  pageViews: Array<{
-    page: string;
-    views: number;
   }>;
   deviceStats: {
     desktop: number;
     mobile: number;
     tablet: number;
+    [key: string]: number;
   };
   browserStats: {
     chrome: number;
     firefox: number;
     safari: number;
     edge: number;
+    [key: string]: number;
   };
 }
 
@@ -80,58 +89,32 @@ export default function AnalyticsPage() {
 
   async function fetchAnalytics() {
     try {
+      setLoading(true);
       const response = await fetch(`/api/admin/analytics?range=${timeRange}`);
+      if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
       setAnalyticsData(data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      // Set mock data for demonstration
+      // Set empty data on error
       setAnalyticsData({
-        totalViews: 15420,
-        totalBlogs: 12,
-        totalUsers: 856,
-        totalSubscribers: 234,
-        viewsByDay: {
-          '2024-01-01': 1200,
-          '2024-01-02': 1350,
-          '2024-01-03': 1100,
-          '2024-01-04': 1450,
-          '2024-01-05': 1600,
-          '2024-01-06': 1800,
-          '2024-01-07': 1920
-        },
-        topBlogs: [
-          { title: "The Future of AI in Web Development", views: 3200, slug: "future-of-ai-web-development" },
-          { title: "Next.js 15: What's New and How to Upgrade", views: 2800, slug: "nextjs-15-whats-new-upgrade-guide" },
-          { title: "Building Scalable APIs with Node.js", views: 2100, slug: "building-scalable-apis-nodejs-express" }
-        ],
-        userGrowth: [
-          { date: '2024-01-01', users: 800 },
-          { date: '2024-01-02', users: 820 },
-          { date: '2024-01-03', users: 835 },
-          { date: '2024-01-04', users: 845 },
-          { date: '2024-01-05', users: 850 },
-          { date: '2024-01-06', users: 853 },
-          { date: '2024-01-07', users: 856 }
-        ],
-        pageViews: [
-          { page: '/', views: 5200 },
-          { page: '/blog', views: 3800 },
-          { page: '/blog/future-of-ai-web-development', views: 3200 },
-          { page: '/blog/nextjs-15-whats-new-upgrade-guide', views: 2800 },
-          { page: '/about', views: 1200 }
-        ],
-        deviceStats: {
-          desktop: 65,
-          mobile: 30,
-          tablet: 5
-        },
-        browserStats: {
-          chrome: 45,
-          firefox: 25,
-          safari: 20,
-          edge: 10
-        }
+        totalViews: 0,
+        totalBlogs: 0,
+        publishedBlogs: 0,
+        totalUsers: 0,
+        totalSubscribers: 0,
+        totalIssues: 0,
+        pendingIssues: 0,
+        uniqueVisitors: 0,
+        totalPageViews: 0,
+        uniqueIPs: 0,
+        viewsByDay: {},
+        visitorsByDay: {},
+        topBlogs: [],
+        topPages: [],
+        userGrowth: [],
+        deviceStats: {},
+        browserStats: {}
       });
     } finally {
       setLoading(false);
@@ -283,15 +266,17 @@ export default function AnalyticsPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Session</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">4m 32s</p>
-              <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +5.3%
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unique Visitors</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                {analyticsData?.uniqueVisitors?.toLocaleString() || '0'}
+              </p>
+              <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center mt-1">
+                <Users className="w-4 h-4 mr-1" />
+                {analyticsData?.uniqueIPs || '0'} unique IPs
               </p>
             </div>
             <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-              <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <Users className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
         </motion.div>

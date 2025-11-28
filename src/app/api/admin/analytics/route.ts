@@ -2,34 +2,36 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import User from '@/models/User';
+import Visitor from '@/models/Visitor';
+import Issue from '@/models/Issue';
 import { verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
-  await dbConnect();
-  
-  // Check admin authentication
-  const cookieStore = await cookies();
-  const token = cookieStore.get('next-auth.session-token');
-  
-  if (!token) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-  }
-  
   try {
-    const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    if (decoded.role !== 'admin') {
+    await dbConnect();
+
+    // Check admin authentication
+    const cookieStore = await cookies();
+    const token = cookieStore.get('next-auth.session-token');
+    
+    if (!token) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
     }
-  } catch (error) {
-    return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
-  }
+    
+    try {
+      const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
+      if (decoded.role !== 'admin') {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+      }
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
+    }
 
-  try {
-    const url = new URL(req.url);
+    const url = new URL(req.url!);
     const range = url.searchParams.get('range') || '7d';
     
-    // Calculate date range
     const now = new Date();
     let startDate = new Date();
     
@@ -47,104 +49,165 @@ export async function GET(req: Request) {
         startDate.setDate(now.getDate() - 7);
     }
 
-    // Get real analytics data from database
+    // Get all analytics data
     const [
       totalBlogs,
+      publishedBlogs,
       totalUsers,
       totalViews,
       topBlogs,
       userGrowth,
-      totalSubscribers
+      totalSubscribers,
+      totalIssues,
+      pendingIssues,
+      visitorStats
     ] = await Promise.all([
       Blog.countDocuments(),
+      Blog.countDocuments({ published: true }),
       User.countDocuments(),
       Blog.aggregate([
         { $group: { _id: null, totalViews: { $sum: '$views' } } }
       ]),
       Blog.find({ published: true })
         .sort({ views: -1 })
-        .limit(5)
-        .select('title views slug'),
+        .limit(10)
+        .select('title views slug createdAt'),
       User.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
         { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
         { $sort: { _id: 1 } }
       ]),
-      // Get newsletter subscribers count
+      // Newsletter subscribers
       (async () => {
         try {
-          const NewsletterSubscriber = (await import('mongoose')).models.NewsletterSubscriber;
-          if (NewsletterSubscriber) {
-            return await NewsletterSubscriber.countDocuments({ subscribed: true });
-          }
-          return 0;
+          const Newsletter = mongoose.models.Newsletter || mongoose.model('Newsletter', new mongoose.Schema({
+            email: String,
+            subscribedAt: Date,
+          }));
+          return await Newsletter.countDocuments();
         } catch {
           return 0;
+        }
+      })(),
+      Issue.countDocuments(),
+      Issue.countDocuments({ status: 'pending' }),
+      // Visitor stats
+      (async () => {
+        try {
+          const uniqueVisitors = await Visitor.aggregate([
+            { $match: { visitedAt: { $gte: startDate } } },
+            {
+              $group: {
+                _id: {
+                  ip: '$ip',
+                  date: { $dateToString: { format: '%Y-%m-%d', date: '$visitedAt' } }
+                }
+              }
+            },
+            {
+              $group: {
+                _id: '$_id.date',
+                count: { $sum: 1 }
+              }
+            },
+            { $sort: { _id: 1 } }
+          ]);
+
+          const totalPageViews = await Visitor.countDocuments({ visitedAt: { $gte: startDate } });
+          const uniqueIPs = await Visitor.distinct('ip', { visitedAt: { $gte: startDate } });
+
+          const topPages = await Visitor.aggregate([
+            { $match: { visitedAt: { $gte: startDate } } },
+            { $group: { _id: '$path', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+          ]);
+
+          const deviceStats = await Visitor.aggregate([
+            { $match: { visitedAt: { $gte: startDate } } },
+            { $group: { _id: '$device', count: { $sum: 1 } } }
+          ]);
+
+          const browserStats = await Visitor.aggregate([
+            { $match: { visitedAt: { $gte: startDate } } },
+            { $group: { _id: '$browser', count: { $sum: 1 } } }
+          ]);
+
+          return {
+            uniqueVisitors: uniqueVisitors.length,
+            totalPageViews,
+            uniqueIPs: uniqueIPs.length,
+            visitorsByDay: uniqueVisitors.reduce((acc: any, item: any) => {
+              acc[item._id] = item.count;
+              return acc;
+            }, {}),
+            topPages: topPages.map((item: any) => ({
+              page: item._id,
+              views: item.count
+            })),
+            deviceStats: deviceStats.reduce((acc: any, item: any) => {
+              acc[item._id || 'unknown'] = item.count;
+              return acc;
+            }, {}),
+            browserStats: browserStats.reduce((acc: any, item: any) => {
+              acc[item._id || 'unknown'] = item.count;
+              return acc;
+            }, {}),
+          };
+        } catch (error) {
+          return {
+            uniqueVisitors: 0,
+            totalPageViews: 0,
+            uniqueIPs: 0,
+            visitorsByDay: {},
+            topPages: [],
+            deviceStats: {},
+            browserStats: {},
+          };
         }
       })()
     ]);
 
-    // Generate views by day data
+    // Generate views by day data from blogs
     const viewsByDay: { [date: string]: number } = {};
     const blogs = await Blog.find({ published: true });
     
     blogs.forEach(blog => {
       if (blog.viewsByDay) {
-        Object.entries(blog.viewsByDay).forEach(([date, views]) => {
-          if (new Date(date) >= startDate) {
-            viewsByDay[date] = (viewsByDay[date] || 0) + views;
+        Object.keys(blog.viewsByDay).forEach(date => {
+          const viewDate = new Date(date);
+          if (viewDate >= startDate) {
+            viewsByDay[date] = (viewsByDay[date] || 0) + blog.viewsByDay[date];
           }
         });
       }
     });
 
-    // Get device and browser stats (mock data for now)
-    const deviceStats = {
-      desktop: 65,
-      mobile: 30,
-      tablet: 5
-    };
-
-    const browserStats = {
-      chrome: 45,
-      firefox: 25,
-      safari: 20,
-      edge: 10
-    };
-
-    // Get page views (mock data for now)
-    const pageViews = [
-      { page: '/', views: Math.floor(totalViews[0]?.totalViews * 0.3 || 0) },
-      { page: '/blog', views: Math.floor(totalViews[0]?.totalViews * 0.2 || 0) },
-      ...topBlogs.map(blog => ({
-        page: `/blog/${blog.slug}`,
-        views: blog.views
-      }))
-    ];
-
-    const analyticsData = {
-      totalViews: totalViews[0]?.totalViews || 0,
+    return NextResponse.json({
       totalBlogs,
+      publishedBlogs,
       totalUsers,
+      totalViews: totalViews[0]?.totalViews || 0,
       totalSubscribers,
-      viewsByDay,
+      totalIssues,
+      pendingIssues,
       topBlogs: topBlogs.map(blog => ({
         title: blog.title,
-        views: blog.views,
-        slug: blog.slug
+        views: blog.views || 0,
+        slug: blog.slug,
+        createdAt: blog.createdAt
       })),
       userGrowth: userGrowth.map(item => ({
         date: item._id,
         users: item.count
       })),
-      pageViews,
-      deviceStats,
-      browserStats
-    };
-
-    return NextResponse.json(analyticsData);
-  } catch (error) {
+      viewsByDay,
+      ...visitorStats,
+    });
+  } catch (error: any) {
     console.error('Analytics error:', error);
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message || 'Failed to fetch analytics' 
+    }, { status: 500 });
   }
-} 
+}

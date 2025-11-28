@@ -64,6 +64,49 @@ export async function POST(req: Request) {
   }
 }
 
+// Auto-create admin on GET if doesn't exist
+export async function GET(req: Request) {
+  try {
+    await dbConnect();
+    
+    // Check if admin exists
+    let admin = await User.findOne({ email: 'admin@in.com', role: 'admin' });
+    
+    if (!admin) {
+      // Create default admin
+      const hashedPassword = await bcrypt.hash('admin', 12);
+      admin = await User.create({
+        name: 'Admin',
+        email: 'admin@in.com',
+        password: hashedPassword,
+        role: 'admin',
+        emailVerified: new Date(),
+        disabled: false,
+      });
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Default admin created',
+        email: admin.email 
+      });
+    } else {
+      // Update password to ensure it's correct
+      const hashedPassword = await bcrypt.hash('admin', 12);
+      admin.password = hashedPassword;
+      await admin.save();
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Admin credentials synced',
+        email: admin.email 
+      });
+    }
+  } catch (error: any) {
+    console.error('Auto-setup error:', error);
+    return NextResponse.json({ 
+      error: error.message || 'Failed to setup admin' 
+    }, { status: 500 });
+  }
+}
+
 export async function GET(req: Request) {
   try {
     await dbConnect();

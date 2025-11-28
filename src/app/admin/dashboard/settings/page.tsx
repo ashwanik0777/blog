@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Lock } from "lucide-react";
 
 interface WebsiteSettings {
   enableChatbot: boolean;
@@ -84,12 +86,23 @@ export default function SettingsPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Website Settings
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Configure website features and settings
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Website Settings
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Configure website features and settings
+            </p>
+          </div>
+          <Link
+            href="/admin/dashboard/settings/password"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            <Lock className="h-4 w-4" />
+            Update Password
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

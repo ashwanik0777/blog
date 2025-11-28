@@ -11,11 +11,25 @@ async function getBaseUrl() {
 }
 
 async function getLatestBlogs() {
-  const baseUrl = await getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/blog`, { cache: 'no-store' });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.blogs ? data.blogs.slice(0, 6) : [];
+  try {
+    const baseUrl = await getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/blog?pageSize=6`, { 
+      cache: 'no-store',
+      next: { revalidate: 0 }
+    });
+    if (!res.ok) {
+      console.error('Blog fetch failed:', res.status);
+      return [];
+    }
+    const data = await res.json();
+    const blogs = data.blogs || [];
+    // Filter only published blogs
+    const publishedBlogs = blogs.filter((blog: any) => blog.published === true);
+    return publishedBlogs.slice(0, 6);
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    return [];
+  }
 }
 
 export default async function Home() {
