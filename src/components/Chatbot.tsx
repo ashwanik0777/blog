@@ -63,7 +63,7 @@ export default function Chatbot() {
   return (
     <>
       <button
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full shadow-lg w-14 h-14 flex items-center justify-center text-2xl hover:scale-110 transition"
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white rounded-full shadow-lg w-14 h-14 flex items-center justify-center text-2xl hover:scale-110 hover:bg-blue-700 transition"
         onClick={() => setOpen((v) => !v)}
         aria-label="Open AI Chatbot"
       >

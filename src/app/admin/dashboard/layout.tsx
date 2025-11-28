@@ -204,7 +204,7 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                   <LayoutDashboard className="h-5 w-5 text-white" />
                 </div>
                 <h1 className="text-lg font-bold text-white">Admin Panel</h1>
@@ -238,7 +238,7 @@ export default function DashboardLayout({
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mr-3">
+                  <div className="p-2 bg-blue-600 rounded-full mr-3">
                     {(() => {
                       const UserIcon = getUserIcon();
                       return <UserIcon className="h-4 w-4 text-white" />;
@@ -260,7 +260,7 @@ export default function DashboardLayout({
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-2">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+              <div className="p-2 bg-blue-600 rounded-full">
                 {(() => {
                   const UserIcon = getUserIcon();
                   return <UserIcon className="h-4 w-4 text-white" />;
@@ -371,7 +371,7 @@ export default function DashboardLayout({
               
               {/* User Menu */}
               <button className="flex items-center space-x-2 p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <span className="hidden md:block text-sm font-medium">Admin User</span>

@@ -346,20 +346,20 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <button
               onClick={handleCreateNew}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg"
+              className="bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg"
             >
               <Plus className="w-5 h-5" />
               <span>Create Blog</span>
             </button>
-            <button className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
+            <button className="bg-green-600 text-white px-6 py-4 rounded-xl hover:bg-green-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
               <BarChart3 className="w-5 h-5" />
               <span>Analytics</span>
             </button>
-            <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
+            <button className="bg-purple-600 text-white px-6 py-4 rounded-xl hover:bg-purple-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
               <Users className="w-5 h-5" />
               <span>Users</span>
             </button>
-            <button className="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-4 rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
+            <button className="bg-orange-600 text-white px-6 py-4 rounded-xl hover:bg-orange-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </button>

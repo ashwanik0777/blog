@@ -23,10 +23,10 @@ export default async function Home() {
     const latestBlogs = await getLatestBlogs();
   return (
    <>
-   <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
+   <main className="min-h-screen bg-white dark:bg-gray-900">
       {/* Navbar */}
-      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 shadow-md sticky top-0 z-40 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-        <Link href="/" className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text hover:scale-105 transition-transform">
+      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white dark:bg-gray-900 shadow-md sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700">
+        <Link href="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
           TechUpdatesZone Blog
         </Link>
         <div className="flex gap-6">
@@ -38,14 +38,13 @@ export default async function Home() {
       <section className="max-w-6xl mx-auto px-4 py-16 grid gap-12 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-start">
         {/* Hero Section */}
         <div className="relative w-full flex flex-col items-start text-left">
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-tr from-blue-400 to-purple-400 rounded-full blur-2xl opacity-30 animate-pulse" />
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-gray-900 dark:text-white">
             TechUpdatesZone Blog
           </h1>
           <p className="text-lg md:text-2xl text-gray-800 dark:text-gray-100 mb-6 max-w-2xl font-medium">
             Your AI-powered hub for the latest tech updates, deep–dive tutorials, and industry insights — built on Next.js 15 and Google Gemini.
           </p>
-          <Link href="/blog" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-700 transition mb-4">
+          <Link href="/blog" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-colors mb-4">
             Explore Blogs
           </Link>
           <span className="text-gray-700 dark:text-gray-200 text-base font-semibold mb-2">Or subscribe for TechUpdatesZone digests:</span>
@@ -99,7 +98,7 @@ export default async function Home() {
               key={feature.title}
               className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm hover:shadow-xl transition-shadow"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/15 to-purple-500/15 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4">
                 <feature.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -172,7 +171,7 @@ export default async function Home() {
             ))}
           </ul>
         </div>
-        <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl p-8 shadow-lg">
+        <div className="bg-blue-600 dark:bg-blue-700 text-white rounded-2xl p-8 shadow-lg">
           <p className="text-sm uppercase tracking-wide font-semibold opacity-80 mb-2">
             Creator stories
           </p>

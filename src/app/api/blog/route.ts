@@ -34,6 +34,7 @@ export async function GET(req: Request) {
 
     const total = await Blog.countDocuments();
     const blogs = await Blog.find()
+      .populate('author', 'name email image')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize);
@@ -43,6 +44,7 @@ export async function GET(req: Request) {
 
   const total = await Blog.countDocuments({ published: true });
   const blogs = await Blog.find({ published: true })
+    .populate('author', 'name email image')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(pageSize);

@@ -23,9 +23,9 @@ export default function BlogCard({ blog }: { blog: any }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-black/40" />
         {blog.featured && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+          <div className="absolute top-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
             ⭐ Featured
           </div>
         )}

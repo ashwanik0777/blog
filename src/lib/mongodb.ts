@@ -15,9 +15,16 @@ if (!cached) {
 async function dbConnect() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    // Ensure database name is "Blog"
+    const uri = MONGODB_URI.includes('/Blog') || MONGODB_URI.includes('?') 
+      ? MONGODB_URI 
+      : MONGODB_URI.replace(/\/[^/?]*(\?|$)/, '/Blog$1');
+    
+    cached.promise = mongoose.connect(uri, {
       bufferCommands: false,
+      dbName: 'Blog',
     }).then((mongoose) => {
+      console.log('✅ Connected to MongoDB database: Blog');
       return mongoose;
     });
   }
