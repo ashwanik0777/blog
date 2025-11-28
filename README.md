@@ -1,8 +1,8 @@
-# 🤖 Gemini AI Blog
+# 🤖 TechUpdatesZone Blog
 
 <div align="center">
 
-![Gemini AI Blog](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![TechUpdatesZone Blog](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-2f74c0?style=for-the-badge&logo=typescript)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-0fa14c?style=for-the-badge&logo=mongodb)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.0-38B2AC?style=for-the-badge&logo=tailwind-css)

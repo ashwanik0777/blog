@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "system", content: "Hi! I am Gemini AI. Ask me anything about this blog, get suggestions, or summaries!" },
+    { role: "system", content: "Hi! I am the TechUpdatesZone AI assistant. Ask me anything about this blog, get suggestions, or summaries!" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,7 @@ export default function Chatbot() {
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-80 max-w-[95vw] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-            <span className="font-bold text-lg">Gemini Chatbot</span>
+            <span className="font-bold text-lg">TechUpdatesZone Chatbot</span>
             <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700">✕</button>
           </div>
           <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-2" style={{ maxHeight: 320 }}>
@@ -92,7 +92,7 @@ export default function Chatbot() {
                 </div>
               </div>
             ))}
-            {loading && <div className="text-left text-gray-400">Gemini is typing...</div>}
+            {loading && <div className="text-left text-gray-400">AI is typing...</div>}
           </div>
           <form
             className="flex gap-2 p-2 border-t border-gray-200 dark:border-gray-700"

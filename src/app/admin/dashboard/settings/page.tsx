@@ -22,8 +22,8 @@ export default function SettingsPage() {
     enableComments: true,
     enableNewsletter: true,
     enableAnalytics: true,
-    siteName: 'Gemini AI Blog',
-    siteDescription: 'AI-powered blog platform with Gemini integration'
+    siteName: 'TechUpdatesZone Blog',
+    siteDescription: 'TechUpdatesZone Blog — AI-powered tech news, tutorials, and insights with Google Gemini integration.'
   });
   const [loading, setLoading] = useState(false);
 

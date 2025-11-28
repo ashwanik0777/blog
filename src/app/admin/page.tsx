@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -41,18 +42,25 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else {
+      if (result?.error) {
         setError("Invalid credentials or insufficient permissions");
+        setLoading(false);
+        return;
+      }
+
+      // Check if user is admin
+      const sessionCheck = await fetch('/api/auth/admin-session');
+      if (sessionCheck.ok) {
+        router.push('/admin/dashboard');
+        router.refresh();
+      } else {
+        setError("Admin access required");
       }
     } catch (error) {
       setError("An error occurred. Please try again.");

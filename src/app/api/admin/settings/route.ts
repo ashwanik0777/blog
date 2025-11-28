@@ -24,8 +24,8 @@ export async function GET(req: Request) {
       enableComments: process.env.ENABLE_COMMENTS === 'true',
       enableNewsletter: process.env.ENABLE_NEWSLETTER === 'true',
       enableAnalytics: process.env.ENABLE_ANALYTICS === 'true',
-      siteName: process.env.SITE_NAME || 'Gemini AI Blog',
-      siteDescription: process.env.SITE_DESCRIPTION || 'AI-powered blog platform with Gemini integration'
+      siteName: process.env.SITE_NAME || 'TechUpdatesZone Blog',
+      siteDescription: process.env.SITE_DESCRIPTION || 'TechUpdatesZone Blog — AI-powered tech news, tutorials, and insights with Google Gemini integration.'
     });
   } catch (error) {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 });

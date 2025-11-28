@@ -3,35 +3,21 @@ import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  FaTachometerAlt,
-  FaHome,
-  FaInfoCircle,
-  FaHandshake,
-  FaFlask,
-  FaBook,
-  FaCalendarAlt,
-  FaUsers,
-  FaStar,
-  FaCertificate,
-  FaBlog,
-  FaGraduationCap,
-  FaImage,
-  FaQuestionCircle,
-  FaBriefcase,
-  FaProjectDiagram,
-  FaCogs,
-  FaChartLine,
-  FaNewspaper,
-  FaChevronDown,
-  FaChevronRight,
-  FaChevronLeft,
-  FaSignOutAlt,
-  FaUserShield,
-  FaUser,
-  FaHandsHelping,
-  FaSearch,
-  FaBell,
-} from "react-icons/fa";
+  LayoutDashboard,
+  FileText,
+  LineChart,
+  Newspaper,
+  Users,
+  FlaskConical,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Shield,
+  User,
+  Search,
+  Bell,
+} from "lucide-react";
 
 interface MenuItem {
   id: string;
@@ -66,43 +52,43 @@ export default function DashboardLayout({
     {
       id: "dashboard",
       label: "Dashboard",
-      icon: FaTachometerAlt,
+      icon: LayoutDashboard,
       color: "text-purple-400",
     },
     {
       id: "blogs",
       label: "Blog Management",
-      icon: FaBlog,
+      icon: FileText,
       color: "text-blue-400",
     },
     {
       id: "analytics",
       label: "Analytics",
-      icon: FaChartLine,
+      icon: LineChart,
       color: "text-green-400",
     },
     {
       id: "newsletter",
       label: "Newsletter",
-      icon: FaNewspaper,
+      icon: Newspaper,
       color: "text-orange-400",
     },
     {
       id: "users",
       label: "User Management",
-      icon: FaUsers,
+      icon: Users,
       color: "text-cyan-400",
     },
     {
       id: "ai-content",
       label: "AI Content",
-      icon: FaFlask,
+      icon: FlaskConical,
       color: "text-yellow-400",
     },
     {
       id: "settings",
       label: "Settings",
-      icon: FaCogs,
+      icon: Settings,
       color: "text-red-400",
     },
   ];
@@ -154,13 +140,13 @@ export default function DashboardLayout({
   const getUserIcon = () => {
     switch (userInfo.role) {
       case "admin":
-        return FaUserShield;
+        return Shield;
       case "faculty":
-        return FaUser;
+        return User;
       case "volunteer":
-        return FaHandsHelping;
+        return User;
       default:
-        return FaUser;
+        return User;
     }
   };
 
@@ -219,7 +205,7 @@ export default function DashboardLayout({
             {!sidebarCollapsed && (
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                  <FaTachometerAlt className="h-5 w-5 text-white" />
+                  <LayoutDashboard className="h-5 w-5 text-white" />
                 </div>
                 <h1 className="text-lg font-bold text-white">Admin Panel</h1>
               </div>
@@ -233,9 +219,9 @@ export default function DashboardLayout({
               title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {sidebarCollapsed ? (
-                <FaChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-gray-400" />
               ) : (
-                <FaChevronLeft className="h-4 w-4 text-gray-400" />
+                <ChevronLeft className="h-4 w-4 text-gray-400" />
               )}
             </button>
           </div>
@@ -268,7 +254,7 @@ export default function DashboardLayout({
                   className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
                   title="Logout"
                 >
-                  <FaSignOutAlt className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                  <LogOut className="h-4 w-4 text-gray-400 group-hover:text-white" />
                 </button>
               </div>
             </div>
@@ -285,7 +271,7 @@ export default function DashboardLayout({
                 className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
                 title="Logout"
               >
-                <FaSignOutAlt className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                <LogOut className="h-4 w-4 text-gray-400 group-hover:text-white" />
               </button>
             </div>
           )}
@@ -372,12 +358,12 @@ export default function DashboardLayout({
                   placeholder="Search..."
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
               
               {/* Notifications */}
               <button className="relative p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                <FaBell className="w-5 h-5" />
+                <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
                   3
                 </span>
@@ -386,7 +372,7 @@ export default function DashboardLayout({
               {/* User Menu */}
               <button className="flex items-center space-x-2 p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <FaUser className="w-4 h-4 text-white" />
+                  <User className="w-4 h-4 text-white" />
                 </div>
                 <span className="hidden md:block text-sm font-medium">Admin User</span>
               </button>

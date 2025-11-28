@@ -1,32 +1,32 @@
 import { NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 
 export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('next-auth.session-token');
+    const session = await getServerSession(authOptions);
 
-    if (!token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'No session' }, { status: 401 });
     }
 
-    const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    
-    if (decoded.role !== 'admin') {
+    const userRole = (session.user as any).role;
+
+    if (userRole !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     return NextResponse.json({
       user: {
-        id: decoded.sub,
-        email: decoded.email,
-        role: decoded.role,
-        name: decoded.name,
-        accessToken: token.value
+        id: session.user.id || session.user.email,
+        email: session.user.email,
+        role: userRole,
+        name: session.user.name,
+        image: session.user.image
       }
     });
   } catch (error) {
+    console.error('Admin session error:', error);
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
   }
 } 

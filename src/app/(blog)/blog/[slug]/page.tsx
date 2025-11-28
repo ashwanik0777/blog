@@ -4,16 +4,24 @@ import { Metadata } from "next";
 import Comments from "@/components/Comments";
 
 async function getBlog(slug: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/blog/${slug}`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch blog');
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/blog/${slug}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error("Failed to fetch blog");
   return res.json();
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+type BlogPageParams = { params: { slug: string } };
+
+export async function generateMetadata(
+  { params }: BlogPageParams
+): Promise<Metadata> {
+  const { slug } = params;
   try {
     const blog = await getBlog(slug);
-    const url = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/blog/${blog.slug}`;
+    const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const url = `${base}/blog/${blog.slug}`;
     return {
       title: blog.title,
       description: blog.summary,
@@ -39,8 +47,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function BlogDetailPage({ params }: BlogPageParams) {
+  const { slug } = params;
   let blog;
   try {
     blog = await getBlog(slug);
