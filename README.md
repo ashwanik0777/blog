@@ -62,34 +62,34 @@ All platform docs (`API_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DEPLOYMENT.md`, `
 
 ```mermaid
 graph TB
-    subgraph "Clients"
-        A[Public Web]
-        B[Admin Dashboard]
-        C[AI Chatbot Widget]
+    subgraph Clients
+        A["Public Web"]
+        B["Admin Dashboard"]
+        C["AI Chatbot Widget"]
     end
 
     subgraph "Next.js App"
-        D[App Router Pages]
-        E[React Components]
-        F[API Routes & Server Actions]
-        G[Middleware]
+        D["App Router Pages"]
+        E["Shared Components"]
+        F["API Routes + Server Actions"]
+        G["Middleware"]
     end
 
-    subgraph "Services"
-        H[Auth (NextAuth)]
-        I[Blog/User Services]
-        J[AI Service Layer]
-        K[Analytics Engine]
+    subgraph "Core Services"
+        H["Auth · NextAuth"]
+        I["Content Services"]
+        J["AI Service Layer"]
+        K["Analytics Engine"]
     end
 
     subgraph "Data Stores"
-        L[MongoDB Atlas]
-        M[Edge Cache/CDN]
+        L["MongoDB Atlas"]
+        M["Edge Cache / CDN"]
     end
 
     subgraph "External Providers"
-        N[Google Gemini]
-        O[Google OAuth]
+        N["Google Gemini"]
+        O["Google OAuth"]
     end
 
     A --> D
@@ -496,7 +496,7 @@ Development standards live in `CONTRIBUTING.md`.
 
 <div align="center">
 
-**Built with ❤️, Next.js, and Google Gemini AI.**
+**Built with Royal and Google Gemini AI.**
 
 [Report Bug](https://github.com/yourusername/gemini-ai-blog/issues) • [Request Feature](https://github.com/yourusername/gemini-ai-blog/issues) • [Star Repo](https://github.com/yourusername/gemini-ai-blog)
 

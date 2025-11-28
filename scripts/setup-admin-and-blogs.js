@@ -1,8 +1,15 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const { MONGODB_URI } = process.env;
+
+if (!MONGODB_URI) {
+  console.error('❌ Missing MONGODB_URI environment variable.');
+  process.exit(1);
+}
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://blog:u5k0Km2rzd0dRZcG@blog.a1u1ipy.mongodb.net/');
+mongoose.connect(MONGODB_URI);
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;

@@ -5,6 +5,7 @@ import clientPromise from './mongodbClient';
 import User from '../models/User';
 import type { NextAuthOptions } from 'next-auth';
 import bcrypt from 'bcryptjs';
+import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -21,6 +22,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        await dbConnect();
         const user = await User.findOne({ email: credentials.email });
         if (!user || !user.password) return null;
         const isValid = await bcrypt.compare(credentials.password, user.password);
