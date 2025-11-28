@@ -4,6 +4,15 @@ const bcrypt = require('bcryptjs');
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://blog:u5k0Km2rzd0dRZcG@blog.a1u1ipy.mongodb.net/');
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin User';
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('❌ Missing ADMIN_EMAIL or ADMIN_PASSWORD environment variables.');
+  process.exit(1);
+}
+
 // Define schemas
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -56,14 +65,14 @@ async function setupAdminAndBlogs() {
     console.log('🔧 Setting up admin user and sample blogs...');
     
     // Check if admin user exists
-    let adminUser = await User.findOne({ email: 'admin@example.com' });
+    let adminUser = await User.findOne({ email: ADMIN_EMAIL });
     
     if (!adminUser) {
       console.log('👤 Creating admin user...');
-      const hashedPassword = await bcrypt.hash('admin123', 12);
+      const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
       adminUser = await User.create({
-        name: 'Admin User',
-        email: 'admin@example.com',
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
         password: hashedPassword,
         role: 'admin',
         emailVerified: new Date()
@@ -399,7 +408,7 @@ TypeScript can significantly improve your development experience and code qualit
     
     console.log('🎉 Setup completed successfully!');
     console.log('\n📋 Summary:');
-    console.log(`- Admin user: ${adminUser.email} (password: admin123)`);
+    console.log(`- Admin user: ${adminUser.email}`);
     console.log(`- Total blogs: ${await Blog.countDocuments()}`);
     console.log(`- Total users: ${await User.countDocuments()}`);
     
