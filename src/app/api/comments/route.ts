@@ -1,31 +1,16 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Comment from '@/models/Comment';
-import { getToken } from 'next-auth/jwt';
 
 export async function POST(req: Request) {
   await dbConnect();
-  const { blogId, content } = await req.json();
+  const { blogId, content, authorName, authorEmail } = await req.json();
   
-  if (!blogId || !content) {
-    return NextResponse.json({ error: 'Blog ID and content are required' }, { status: 400 });
-  }
-
-  // Get user from session
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  if (!blogId || !content || !authorName) {
+    return NextResponse.json({ error: 'Blog ID, content, and author name are required' }, { status: 400 });
   }
 
   try {
-    // Find user by email
-    const User = (await import('@/models/User')).default;
-    const user = await User.findOne({ email: token.email });
-    
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
     // Verify blog exists
     const Blog = (await import('@/models/Blog')).default;
     const blog = await Blog.findById(blogId);
@@ -54,20 +39,27 @@ export async function POST(req: Request) {
       }
     } catch (error) {
       console.error('AI moderation error:', error);
+      // Default to approved if moderation fails
+      status = 'approved';
     }
 
     const comment = await Comment.create({ 
       blog: blogId, 
-      author: user._id, 
+      authorName,
+      authorEmail: authorEmail || undefined,
       content, 
       status, 
       flaggedReason 
     });
 
-    // Populate author info for response
-    await comment.populate('author', 'name email');
-    
-    return NextResponse.json(comment);
+    return NextResponse.json({
+      _id: comment._id,
+      content: comment.content,
+      authorName: comment.authorName,
+      authorEmail: comment.authorEmail,
+      createdAt: comment.createdAt,
+      status: comment.status,
+    });
   } catch (error) {
     console.error('Comment creation error:', error);
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
@@ -76,19 +68,19 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   await dbConnect();
-  const url = new URL(req.url);
+  const url = new URL(req.url!);
   const blogId = url.searchParams.get('blogId');
   const isAdmin = url.searchParams.get('admin') === 'true';
 
   if (isAdmin) {
     // Admin request - get all comments
+    const { getToken } = await import('next-auth/jwt');
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     if (!token || token.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const comments = await Comment.find()
       .populate('blog', 'title')
-      .populate('author', 'name email')
       .sort({ createdAt: -1 });
     return NextResponse.json({ comments });
   } else {
@@ -101,9 +93,8 @@ export async function GET(req: Request) {
       blog: blogId, 
       status: 'approved' 
     })
-      .populate('author', 'name email')
       .sort({ createdAt: -1 });
     
     return NextResponse.json({ comments });
   }
-} 
+}

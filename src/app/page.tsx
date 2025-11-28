@@ -1,7 +1,8 @@
 import Link from "next/link";
 import BlogCard from "@/components/BlogCard";
+import Footer from "@/components/Footer";
 import { headers } from "next/headers";
-import { Mail, MessageSquare, FileText, HelpCircle, Github, Twitter, Linkedin, Facebook } from "lucide-react";
+import { Sparkles, TrendingUp, ShieldCheck, Zap, BookOpen, Code, Rocket } from "lucide-react";
 
 async function getBaseUrl() {
   const headersList = await headers();
@@ -23,7 +24,6 @@ async function getLatestBlogs() {
     }
     const data = await res.json();
     const blogs = data.blogs || [];
-    // Filter only published blogs
     const publishedBlogs = blogs.filter((blog: any) => blog.published === true);
     return publishedBlogs.slice(0, 6);
   } catch (error) {
@@ -47,157 +47,172 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Latest from TechUpdatesZone Section */}
+      {/* Hero Section */}
+      <section className="max-w-6xl mx-auto px-4 py-20">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+            <Zap className="h-4 w-4" />
+            AI-Powered Tech Blog
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
+            Latest from <span className="text-blue-600 dark:text-blue-400">TechUpdatesZone</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed">
+            Stay updated with cutting-edge tech insights, in-depth tutorials, and industry news powered by AI
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105"
+            >
+              <BookOpen className="h-5 w-5" />
+              Explore All Blogs
+            </Link>
+            <Link
+              href="/report-issue"
+              className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 px-8 py-4 rounded-lg font-semibold border-2 border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+            >
+              Report an Issue
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="bg-gray-50 dark:bg-gray-800 py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Why TechUpdatesZone?
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Discover what makes our platform unique
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Sparkles,
+                title: "AI-Powered Content",
+                description: "Leverage Google Gemini AI for intelligent content generation, summaries, and insights that keep you ahead of the curve.",
+                color: "text-purple-600 dark:text-purple-400"
+              },
+              {
+                icon: Rocket,
+                title: "Latest Tech Trends",
+                description: "Get real-time updates on emerging technologies, frameworks, and best practices from industry experts.",
+                color: "text-blue-600 dark:text-blue-400"
+              },
+              {
+                icon: Code,
+                title: "Deep-Dive Tutorials",
+                description: "Comprehensive guides and tutorials that help you master new technologies and improve your development skills.",
+                color: "text-green-600 dark:text-green-400"
+              },
+              {
+                icon: ShieldCheck,
+                title: "Quality Content",
+                description: "Every article is carefully curated and reviewed to ensure accuracy, relevance, and value for our readers.",
+                color: "text-orange-600 dark:text-orange-400"
+              },
+              {
+                icon: TrendingUp,
+                title: "SEO Optimized",
+                description: "All content is optimized for search engines, making it easy to discover and share with your network.",
+                color: "text-red-600 dark:text-red-400"
+              },
+              {
+                icon: BookOpen,
+                title: "Regular Updates",
+                description: "Fresh content published regularly to keep you informed about the latest developments in the tech world.",
+                color: "text-indigo-600 dark:text-indigo-400"
+              }
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all transform hover:-translate-y-1"
+              >
+                <div className={`w-12 h-12 ${feature.color} bg-opacity-10 dark:bg-opacity-20 rounded-lg flex items-center justify-center mb-4`}>
+                  <feature.icon className={`h-6 w-6 ${feature.color}`} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Blogs Section */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
-            Latest from TechUpdatesZone
-          </h1>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Latest Articles
+          </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Stay updated with the latest tech insights, tutorials, and industry news
+            Explore our most recent tech insights and tutorials
           </p>
         </div>
 
         {latestBlogs.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <div className="text-gray-500 dark:text-gray-400 text-lg mb-4">No blogs published yet.</div>
             <Link href="/admin" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
               Create your first blog →
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {latestBlogs.map((blog: any) => (
-              <BlogCard key={blog._id} blog={blog} />
-            ))}
-          </div>
-        )}
-
-        {latestBlogs.length > 0 && (
-          <div className="text-center">
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-colors"
-            >
-              View All Blogs
-            </Link>
-          </div>
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {latestBlogs.map((blog: any) => (
+                <BlogCard key={blog._id} blog={blog} />
+              ))}
+            </div>
+            <div className="text-center">
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-all transform hover:scale-105"
+              >
+                View All Blogs
+                <TrendingUp className="h-5 w-5" />
+              </Link>
+            </div>
+          </>
         )}
       </section>
 
-      {/* Enhanced Footer */}
-      <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-20">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* About Section */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">About</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                TechUpdatesZone Blog - Your AI-powered hub for the latest tech updates, deep-dive tutorials, and industry insights.
-              </p>
-              <div className="flex gap-3">
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Github className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/blog" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">
-                    All Blogs
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/report-issue" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">
-                    Report Issue
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm flex items-center gap-2">
-                    <HelpCircle className="h-4 w-4" />
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <Link href="/report-issue" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Contact Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Contact</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="mailto:support@techupdateszone.com" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    support@techupdateszone.com
-                  </a>
-                </li>
-                <li>
-                  <Link href="/report-issue" className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium mt-4">
-                    <HelpCircle className="h-4 w-4" />
-                    Report an Issue
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-gray-600 dark:text-gray-400 text-sm">
-                &copy; {new Date().getFullYear()} TechUpdatesZone Blog. All rights reserved.
-              </div>
-              <div className="flex gap-6 text-sm">
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Privacy Policy
-                </a>
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Terms of Service
-                </a>
-                <Link href="/report-issue" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Report Issue
-                </Link>
-              </div>
-            </div>
+      {/* CTA Section */}
+      <section className="bg-blue-600 dark:bg-blue-700 py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Stay Updated with TechUpdatesZone
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Get the latest tech news, tutorials, and insights delivered to your inbox
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold shadow-lg hover:bg-gray-100 transition-all transform hover:scale-105"
+            >
+              Browse Articles
+            </Link>
+            <Link
+              href="/report-issue"
+              className="inline-flex items-center gap-2 bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold border-2 border-white hover:bg-blue-800 transition-all"
+            >
+              Contact Us
+            </Link>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </main>
   );
 }

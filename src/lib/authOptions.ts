@@ -22,11 +22,37 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        
+        // Check .env credentials first
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@in.com';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+        
+        if (credentials.email === adminEmail && credentials.password === adminPassword) {
+          // Return admin user object
+          await dbConnect();
+          let user = await User.findOne({ email: adminEmail, role: 'admin' });
+          if (!user) {
+            // Create admin user if doesn't exist
+            const hashedPassword = await bcrypt.hash(adminPassword, 12);
+            user = await User.create({
+              name: process.env.ADMIN_NAME || 'Admin',
+              email: adminEmail,
+              password: hashedPassword,
+              role: 'admin',
+              emailVerified: new Date(),
+              disabled: false,
+            });
+          }
+          return user;
+        }
+        
+        // Fallback to database check
         await dbConnect();
         const user = await User.findOne({ email: credentials.email });
         if (!user || !user.password) return null;
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
+        if (user.role !== 'admin') return null; // Only allow admin login
         return user;
       },
     }),

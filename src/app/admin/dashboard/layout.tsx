@@ -51,7 +51,7 @@ export default function DashboardLayout({
   // Menu structure with colors for each icon
   const menuItems: MenuItem[] = [
     {
-      id: "dashboard",
+      id: "/",
       label: "Dashboard",
       icon: LayoutDashboard,
       color: "text-purple-400",
@@ -350,43 +350,7 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-gray-50">
-        {/* Top bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Search */}
-              <div className="relative hidden md:block">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-              
-              {/* Notifications */}
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                  3
-                </span>
-              </button>
-              
-              {/* User Menu */}
-              <button className="flex items-center space-x-2 p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
-                </div>
-                <span className="hidden md:block text-sm font-medium">Admin User</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
+  
         {/* Main content */}
         <main className="flex-1 overflow-auto p-6">
           {children}
