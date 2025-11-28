@@ -36,7 +36,8 @@ async function getRelatedBlogs(categories: string[], currentSlug: string) {
 type BlogPageParams = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: BlogPageParams): Promise<Metadata> {
-  const { slug } = await params;
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
   try {
     const blog = await getBlog(slug);
     const baseUrl = await getBaseUrl();

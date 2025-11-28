@@ -17,6 +17,7 @@ import {
   User,
   Search,
   Bell,
+  AlertCircle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -86,10 +87,16 @@ export default function DashboardLayout({
       color: "text-yellow-400",
     },
     {
+      id: "issues",
+      label: "Reported Issues",
+      icon: AlertCircle,
+      color: "text-red-400",
+    },
+    {
       id: "settings",
       label: "Settings",
       icon: Settings,
-      color: "text-red-400",
+      color: "text-gray-400",
     },
   ];
 
