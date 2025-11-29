@@ -90,9 +90,64 @@ export default function AnalyticsPage() {
   async function fetchAnalytics() {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/analytics?range=${timeRange}`);
-      if (!response.ok) throw new Error('Failed to fetch analytics');
+      const response = await fetch(`/api/admin/analytics?range=${timeRange}`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        // If error response, try to get error message
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Analytics fetch error:', errorData);
+        // Set empty data structure
+        setAnalyticsData({
+          totalViews: 0,
+          totalBlogs: 0,
+          publishedBlogs: 0,
+          totalUsers: 0,
+          totalSubscribers: 0,
+          totalIssues: 0,
+          pendingIssues: 0,
+          uniqueVisitors: 0,
+          totalPageViews: 0,
+          uniqueIPs: 0,
+          viewsByDay: {},
+          visitorsByDay: {},
+          topBlogs: [],
+          topPages: [],
+          userGrowth: [],
+          deviceStats: {},
+          browserStats: {}
+        });
+        return;
+      }
+      
       const data = await response.json();
+      
+      // Check if response has error field
+      if (data.error) {
+        console.error('Analytics API error:', data.error);
+        setAnalyticsData({
+          totalViews: 0,
+          totalBlogs: 0,
+          publishedBlogs: 0,
+          totalUsers: 0,
+          totalSubscribers: 0,
+          totalIssues: 0,
+          pendingIssues: 0,
+          uniqueVisitors: 0,
+          totalPageViews: 0,
+          uniqueIPs: 0,
+          viewsByDay: {},
+          visitorsByDay: {},
+          topBlogs: [],
+          topPages: [],
+          userGrowth: [],
+          deviceStats: {},
+          browserStats: {}
+        });
+        return;
+      }
+      
       setAnalyticsData(data);
     } catch (error) {
       console.error('Error fetching analytics:', error);

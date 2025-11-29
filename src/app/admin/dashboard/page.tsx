@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import AdminBlogEditor from "@/components/AdminBlogEditor";
+import Link from "next/link";
 import { 
   FileText, 
   Eye, 
@@ -21,7 +22,10 @@ import {
   Bot,
   MessageSquare,
   Mail,
-  Settings
+  Settings,
+  ArrowRight,
+  Clock,
+  Tag
 } from "lucide-react";
 
 interface Blog {
@@ -52,6 +56,12 @@ export default function AdminDashboard() {
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [stats, setStats] = useState({
+    totalBlogs: 0,
+    publishedBlogs: 0,
+    totalViews: 0,
+    totalUsers: 0,
+  });
 
   // Check if user is admin
   useEffect(() => {
@@ -62,6 +72,7 @@ export default function AdminDashboard() {
           const data = await response.json();
           setAdminUser(data.user);
           fetchBlogs();
+          fetchStats();
         } else {
           router.push('/admin');
         }
@@ -86,6 +97,23 @@ export default function AdminDashboard() {
     }
   }
 
+  async function fetchStats() {
+    try {
+      const response = await fetch('/api/admin/analytics?range=30d');
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          totalBlogs: data.totalBlogs || 0,
+          publishedBlogs: data.publishedBlogs || 0,
+          totalViews: data.totalViews || 0,
+          totalUsers: data.totalUsers || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }
+
   async function handleDelete(blogId: string) {
     if (!confirm('Are you sure you want to delete this blog?')) return;
 
@@ -106,129 +134,18 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleTogglePublish(blog: Blog) {
-    try {
-      const response = await fetch(`/api/blog/${blog.slug}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          published: !blog.published,
-          status: !blog.published ? 'approved' : 'draft'
-        }),
-      });
-
-      if (response.ok) {
-        setBlogs(blogs.map(b => 
-          b._id === blog._id 
-            ? { ...b, published: !b.published, status: !b.published ? 'approved' : 'draft' }
-            : b
-        ));
-        alert(`Blog ${!blog.published ? 'published' : 'unpublished'} successfully!`);
-      } else {
-        alert('Failed to update blog status');
-      }
-    } catch (error) {
-      console.error('Error updating blog:', error);
-      alert('Error updating blog status');
-    }
-  }
-
-  async function handleUpdateStatus(blog: Blog, newStatus: string) {
-    try {
-      const response = await fetch(`/api/blog/${blog.slug}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        setBlogs(blogs.map(b => 
-          b._id === blog._id ? { ...b, status: newStatus } : b
-        ));
-        alert('Blog status updated successfully!');
-      } else {
-        alert('Failed to update blog status');
-      }
-    } catch (error) {
-      console.error('Error updating blog status:', error);
-      alert('Error updating blog status');
-    }
-  }
-
-  async function handleEdit(blog: Blog) {
-    setEditingBlog(blog);
-    setShowEditor(true);
-  }
-
-  async function handleSaveEdit(updatedBlog: Blog) {
-    try {
-      const response = await fetch(`/api/blog/${updatedBlog.slug}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedBlog),
-      });
-
-      if (response.ok) {
-        setBlogs(blogs.map(b => b._id === updatedBlog._id ? updatedBlog : b));
-        setShowEditor(false);
-        setEditingBlog(null);
-        alert('Blog updated successfully!');
-      } else {
-        alert('Failed to update blog');
-      }
-    } catch (error) {
-      console.error('Error updating blog:', error);
-      alert('Error updating blog');
-    }
-  }
-
-  function handleCancelEdit() {
-    setShowEditor(false);
-    setEditingBlog(null);
-  }
-
-  function handleCreateNew() {
-    setEditingBlog(null);
-    setShowEditor(true);
-  }
-
-  async function handleCreateBlog(newBlog: Blog) {
-    try {
-      const response = await fetch('/api/blog', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newBlog),
-      });
-
-      if (response.ok) {
-        const createdBlog = await response.json();
-        setBlogs([createdBlog, ...blogs]);
-        setShowEditor(false);
-        alert('Blog created successfully!');
-      } else {
-        alert('Failed to create blog');
-      }
-    } catch (error) {
-      console.error('Error creating blog:', error);
-      alert('Error creating blog');
-    }
-  }
-
-  // Filter blogs
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         blog.slug.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || blog.status === filterStatus;
+      blog.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || 
+      (filterStatus === 'published' && blog.published) ||
+      (filterStatus === 'draft' && !blog.published);
     return matchesSearch && matchesStatus;
   });
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -239,287 +156,307 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Dashboard Overview
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Welcome back, {adminUser.email}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {adminUser.email}
-            </span>
-            <button
-              onClick={async () => {
-                try {
-                  await fetch('/api/auth/logout', { method: 'POST' });
-                  router.push('/admin');
-                } catch (error) {
-                  console.error('Logout error:', error);
-                  router.push('/admin');
-                }
-              }}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-                </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          Dashboard Overview
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Welcome back, {adminUser.name || 'Admin'}! Here's what's happening with your blog.
+        </p>
       </div>
 
-              {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Blogs</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{blogs.length}</p>
-              </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Blogs</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBlogs}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.publishedBlogs} published</p>
             </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Published</p>
-                <p className="text-3xl font-bold text-green-600">{blogs.filter(b => b.published).length}</p>
-              </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Drafts</p>
-                <p className="text-3xl font-bold text-yellow-600">{blogs.filter(b => !b.published).length}</p>
-              </div>
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <XCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Views</p>
-                <p className="text-3xl font-bold text-purple-600">{blogs.reduce((sum, blog) => sum + (blog.views || 0), 0)}</p>
-              </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <Eye className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button
-              onClick={handleCreateNew}
-              className="bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create Blog</span>
-            </button>
-            <button className="bg-green-600 text-white px-6 py-4 rounded-xl hover:bg-green-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
-              <BarChart3 className="w-5 h-5" />
-              <span>Analytics</span>
-            </button>
-            <button className="bg-purple-600 text-white px-6 py-4 rounded-xl hover:bg-purple-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
-              <Users className="w-5 h-5" />
-              <span>Users</span>
-            </button>
-            <button className="bg-orange-600 text-white px-6 py-4 rounded-xl hover:bg-orange-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg">
-              <Settings className="w-5 h-5" />
-              <span>Settings</span>
-            </button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search blogs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Views</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews.toLocaleString()}</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                All time
+              </p>
             </div>
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+              <Eye className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Users</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalUsers}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Registered users</p>
+            </div>
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Quick Actions</p>
+              <Link
+                href="/admin/dashboard/blogs"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-semibold text-sm"
               >
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="pending">Pending</option>
-                <option value="flagged">Flagged</option>
-              </select>
+                Manage Blogs
+              </Link>
             </div>
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+              <Settings className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <Link
+          href="/admin/dashboard/blogs"
+          className="bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <FileText className="h-5 w-5" />
+          <span>Manage Blogs</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link
+          href="/admin/dashboard/analytics"
+          className="bg-green-600 text-white px-6 py-4 rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <BarChart3 className="h-5 w-5" />
+          <span>View Analytics</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link
+          href="/admin/dashboard/issues"
+          className="bg-red-600 text-white px-6 py-4 rounded-xl hover:bg-red-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <MessageSquare className="h-5 w-5" />
+          <span>View Issues</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      {/* Recent Blogs */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Recent Blogs</h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Latest blog posts and their status</p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingBlog(null);
+              setShowEditor(true);
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Blog
+          </button>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search blogs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterStatus('published')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'published'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Published
+            </button>
+            <button
+              onClick={() => setFilterStatus('draft')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'draft'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Drafts
+            </button>
           </div>
         </div>
 
-        {/* Blogs Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading blogs...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Title
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Views
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredBlogs.map((blog) => (
-                    <motion.tr
-                      key={blog._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {blog.title}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {blog.slug}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          blog.published 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : blog.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                            : blog.status === 'flagged'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                        }`}>
-                          {blog.published ? 'Published' : blog.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {blog.views || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleEdit(blog)}
-                            className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Edit blog"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleTogglePublish(blog)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              blog.published 
-                                ? 'text-yellow-600 hover:text-yellow-900 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
-                                : 'text-green-600 hover:text-green-900 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                            }`}
-                            title={blog.published ? 'Unpublish blog' : 'Publish blog'}
-                          >
-                            {blog.published ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(blog._id)}
-                            className="text-red-600 hover:text-red-900 dark:hover:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            title="Delete blog"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {filteredBlogs.length === 0 && !loading && (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : filteredBlogs.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No blogs found</p>
-            <p className="text-gray-400 dark:text-gray-500">Create your first blog to get started</p>
+            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 mb-4">No blogs found</p>
+            <button
+              onClick={() => {
+                setEditingBlog(null);
+                setShowEditor(true);
+              }}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              Create Your First Blog
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredBlogs.slice(0, 5).map((blog) => (
+              <motion.div
+                key={blog._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {blog.title}
+                      </h3>
+                      {blog.published ? (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Published
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Draft
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+                      {blog.summary || blog.content.substring(0, 150)}...
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                      {blog.views !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{blog.views} views</span>
+                        </div>
+                      )}
+                      {blog.createdAt && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Tag className="h-3 w-3" />
+                          <span>{blog.tags.length} tags</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => {
+                        setEditingBlog(blog);
+                        setShowEditor(true);
+                      }}
+                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(blog._id)}
+                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+            {filteredBlogs.length > 5 && (
+              <div className="text-center pt-4">
+                <Link
+                  href="/admin/dashboard/blogs"
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                >
+                  View All Blogs ({filteredBlogs.length})
+                </Link>
+              </div>
+            )}
           </div>
         )}
+      </div>
 
       {/* Blog Editor Modal */}
       {showEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <AdminBlogEditor
-              blog={editingBlog || undefined}
-              onSave={editingBlog ? handleSaveEdit : handleCreateBlog}
-              onCancel={handleCancelEdit}
-              mode={editingBlog ? 'edit' : 'create'}
-            />
-          </div>
-        </div>
+        <AdminBlogEditor
+          blog={editingBlog}
+          onClose={() => {
+            setShowEditor(false);
+            setEditingBlog(null);
+            fetchBlogs();
+          }}
+        />
       )}
     </div>
   );
-} 
+}

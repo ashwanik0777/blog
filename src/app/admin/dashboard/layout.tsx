@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -34,9 +34,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [collapsedDropdown, setCollapsedDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [isDark, setIsDark] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [userInfo, setUserInfo] = useState<{
@@ -48,10 +50,27 @@ export default function DashboardLayout({
     role: "admin",
   });
 
+  // Check system theme
+  useEffect(() => {
+    const checkTheme = () => {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setIsDark(true);
+      } else {
+        setIsDark(false);
+      }
+    };
+    
+    checkTheme();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkTheme);
+    
+    return () => mediaQuery.removeEventListener('change', checkTheme);
+  }, []);
+
   // Menu structure with colors for each icon
   const menuItems: MenuItem[] = [
     {
-      id: "/",
+      id: "dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
       color: "text-purple-400",
@@ -129,7 +148,6 @@ export default function DashboardLayout({
       });
       setCollapsedDropdown(collapsedDropdown === item.id ? null : item.id);
     } else {
-      // Navigate to the page
       router.push(`/admin/dashboard/${item.id}`);
     }
   };
@@ -162,7 +180,7 @@ export default function DashboardLayout({
       case "admin":
         return "Administrator";
       case "faculty":
-        return "Faculty Member";
+        return "Faculty";
       case "volunteer":
         return "Volunteer";
       default:
@@ -171,18 +189,22 @@ export default function DashboardLayout({
   };
 
   const renderMenuItem = (item: MenuItem) => {
-    const IconComponent = item.icon;
-    const hasChildren = item.children && item.children.length > 0;
+    const isActive = pathname?.includes(`/admin/dashboard/${item.id}`);
+    const Icon = item.icon;
 
     if (sidebarCollapsed) {
       return (
         <button
           key={item.id}
           onClick={(e) => handleCollapsedItemClick(item, e)}
-          className="w-full flex items-center justify-center p-3 text-left transition-colors duration-200 rounded group relative text-gray-300 hover:bg-gray-800 hover:text-white"
+          className={`w-full p-3 rounded-lg transition-all duration-200 ${
+            isActive
+              ? "bg-blue-600 text-white"
+              : "text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white"
+          }`}
           title={item.label}
         >
-          <IconComponent className={`h-5 w-5 ${item.color} group-hover:text-white`} />
+          <Icon className="h-5 w-5 mx-auto" />
         </button>
       );
     }
@@ -191,30 +213,41 @@ export default function DashboardLayout({
       <button
         key={item.id}
         onClick={() => router.push(`/admin/dashboard/${item.id}`)}
-        className="w-full flex items-center px-4 py-3 text-left transition-colors duration-200 rounded group text-gray-300 hover:bg-gray-800 hover:text-white"
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+          isActive
+            ? "bg-blue-600 text-white shadow-lg"
+            : "text-gray-300 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white"
+        }`}
       >
-        <IconComponent className={`h-4 w-4 mr-3 ${item.color} group-hover:text-white`} />
-        <span className="text-sm font-medium">{item.label}</span>
+        <Icon className={`h-5 w-5 ${isActive ? "text-white" : item.color}`} />
+        <span className="font-medium">{item.label}</span>
       </button>
     );
   };
 
+  const sidebarBg = isDark 
+    ? "bg-gray-900 text-white border-r border-gray-800" 
+    : "bg-white text-gray-900 border-r border-gray-200 shadow-lg";
+  const sidebarText = isDark ? "text-white" : "text-gray-900";
+  const sidebarHover = isDark ? "hover:bg-gray-800" : "hover:bg-gray-50";
+  const sidebarBorder = isDark ? "border-gray-800" : "border-gray-200";
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`${sidebarCollapsed ? "w-16" : "w-72"} bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out relative z-40`}
+        className={`${sidebarCollapsed ? "w-16" : "w-72"} ${sidebarBg} flex flex-col transition-all duration-300 ease-in-out relative z-40`}
       >
         {/* Header */}
-        <div className={`${sidebarCollapsed ? "p-2" : "p-4"} border-b border-gray-800`}>
+        <div className={`${sidebarCollapsed ? "p-2" : "p-4"} border-b ${sidebarBorder}`}>
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                   <LayoutDashboard className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="text-lg font-bold text-white">Admin Panel</h1>
+                <h1 className={`text-lg font-bold ${sidebarText}`}>Admin Panel</h1>
               </div>
             )}
             <button
@@ -222,13 +255,13 @@ export default function DashboardLayout({
                 setSidebarCollapsed(!sidebarCollapsed);
                 setCollapsedDropdown(null);
               }}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              className={`p-2 ${sidebarHover} rounded-lg transition-colors`}
               title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {sidebarCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className={`h-4 w-4 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
               ) : (
-                <ChevronLeft className="h-4 w-4 text-gray-400" />
+                <ChevronLeft className={`h-4 w-4 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
               )}
             </button>
           </div>
@@ -240,9 +273,9 @@ export default function DashboardLayout({
         </nav>
 
         {/* User Profile Section */}
-        <div className="border-t border-gray-800 p-4">
+        <div className={`border-t ${sidebarBorder} p-4`}>
           {!sidebarCollapsed ? (
-            <div className="bg-gray-800 rounded-lg p-4">
+            <div className={`${isDark ? "bg-gray-800" : "bg-gray-50"} rounded-lg p-4`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-600 rounded-full mr-3">
@@ -252,16 +285,16 @@ export default function DashboardLayout({
                     })()}
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-white">{userInfo.name}</h3>
-                    <p className="text-xs text-gray-400">{getUserRoleText()}</p>
+                    <h3 className={`text-sm font-medium ${sidebarText}`}>{userInfo.name}</h3>
+                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{getUserRoleText()}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
+                  className={`p-2 ${isDark ? "hover:bg-red-600" : "hover:bg-red-100"} rounded-lg transition-colors group`}
                   title="Logout"
                 >
-                  <LogOut className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                  <LogOut className={`h-4 w-4 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-red-600"}`} />
                 </button>
               </div>
             </div>
@@ -275,10 +308,10 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 hover:bg-red-600 rounded-lg transition-colors group"
+                className={`p-2 ${isDark ? "hover:bg-red-600" : "hover:bg-red-100"} rounded-lg transition-colors group`}
                 title="Logout"
               >
-                <LogOut className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                <LogOut className={`h-4 w-4 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-red-600"}`} />
               </button>
             </div>
           )}
@@ -289,7 +322,7 @@ export default function DashboardLayout({
       {sidebarCollapsed && collapsedDropdown && (
         <div
           ref={dropdownRef}
-          className="fixed z-50 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 min-w-64 max-w-80"
+          className={`fixed z-50 ${isDark ? "bg-gray-800" : "bg-white"} rounded-lg shadow-2xl border ${sidebarBorder} min-w-64 max-w-80`}
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
@@ -298,50 +331,24 @@ export default function DashboardLayout({
           {(() => {
             const item = menuItems.find((item) => item.id === collapsedDropdown);
             if (!item || !item.children) return null;
-
             return (
-              <div className="py-2">
-                {/* Header with parent label */}
-                <div className="px-4 py-3 border-b border-gray-700 bg-gray-750">
-                  <div className="flex items-center">
-                    <item.icon className={`h-4 w-4 mr-3 ${item.color}`} />
-                    <span className="text-sm font-medium text-white">{item.label}</span>
-                  </div>
-                </div>
-
-                {/* Child items with connecting lines */}
-                <div className="relative py-2">
-                  {/* Main vertical line */}
-                  <div
-                    className="absolute left-6 top-2 w-px bg-gray-600"
-                    style={{ height: `${(item.children.length - 1) * 44 + 22}px` }}
-                  ></div>
-
-                  {/* Child items */}
-                  <div className="space-y-1">
-                    {item.children.map((child, index) => {
-                      const ChildIcon = child.icon;
-
-                      return (
-                        <div key={child.id} className="relative">
-                          {/* Curved connecting line */}
-                          <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex items-center">
-                            <div className="w-4 h-4 border-l border-b border-gray-600 rounded-bl-lg"></div>
-                          </div>
-
-                          <button
-                            onClick={() => router.push(`/admin/dashboard/${child.id}`)}
-                            className="w-full flex items-center px-4 py-2.5 text-left transition-colors duration-200 hover:bg-gray-700 text-gray-300"
-                          >
-                            <div className="w-7"></div> {/* Spacer for alignment */}
-                            <ChildIcon className={`h-4 w-4 mr-3 ${child.color}`} />
-                            <span className="text-sm">{child.label}</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+              <div className="p-2">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  return (
+                    <button
+                      key={child.id}
+                      onClick={() => {
+                        router.push(`/admin/dashboard/${item.id}/${child.id}`);
+                        setCollapsedDropdown(null);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${sidebarHover} ${sidebarText} transition-colors`}
+                    >
+                      <ChildIcon className={`h-4 w-4 ${child.color}`} />
+                      <span>{child.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             );
           })()}
@@ -349,13 +356,9 @@ export default function DashboardLayout({
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-gray-50">
-  
-        {/* Main content */}
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+        {children}
       </div>
     </div>
   );
-} 
+}
