@@ -118,7 +118,7 @@ export default function Chatbot() {
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white rounded-full shadow-2xl w-16 h-16 flex items-center justify-center hover:bg-blue-700 transition-colors"
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white rounded-full shadow-2xl w-12 h-12 flex items-center justify-center hover:bg-blue-700 transition-colors"
         onClick={() => setOpen((v) => !v)}
         aria-label="Open AI Chatbot"
       >

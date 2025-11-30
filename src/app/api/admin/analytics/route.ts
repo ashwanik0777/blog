@@ -4,6 +4,7 @@ import Blog from '@/models/Blog';
 import User from '@/models/User';
 import Visitor from '@/models/Visitor';
 import Issue from '@/models/Issue';
+import Comment from '@/models/Comment';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import mongoose from 'mongoose';
@@ -42,21 +43,30 @@ export async function GET(req: Request) {
     const range = url.searchParams.get('range') || '7d';
     
     const now = new Date();
-    let startDate = new Date();
+    let startDate: Date | null = null;
     
-    switch (range) {
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(now.getDate() - 90);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 7);
+    // Support lifetime data
+    if (range === 'lifetime') {
+      startDate = null; // No date filter for lifetime
+    } else {
+      startDate = new Date();
+      switch (range) {
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 7);
+      }
     }
+
+    // Build match filter for date range
+    const dateFilter = startDate ? { visitedAt: { $gte: startDate } } : {};
 
     // Get all analytics data
     const [
@@ -69,7 +79,8 @@ export async function GET(req: Request) {
       totalSubscribers,
       totalIssues,
       pendingIssues,
-      visitorStats
+      visitorStats,
+      topComments
     ] = await Promise.all([
       Blog.countDocuments(),
       Blog.countDocuments({ published: true }),
@@ -81,11 +92,16 @@ export async function GET(req: Request) {
         .sort({ views: -1 })
         .limit(10)
         .select('title views slug createdAt'),
-      User.aggregate([
-        { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
-        { $sort: { _id: 1 } }
-      ]),
+      startDate 
+        ? User.aggregate([
+            { $match: { createdAt: { $gte: startDate } } },
+            { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } }
+          ])
+        : User.aggregate([
+            { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } }
+          ]),
       // Newsletter subscribers
       (async () => {
         try {
@@ -100,12 +116,19 @@ export async function GET(req: Request) {
       })(),
       Issue.countDocuments(),
       Issue.countDocuments({ status: 'pending' }),
-      // Visitor stats
+      // Visitor stats - Advanced tracking
       (async () => {
         try {
-          // Get unique visitors by IP per day
+          // Total page views (all time or filtered)
+          const totalPageViews = await Visitor.countDocuments(dateFilter);
+
+          // Unique visitors - count distinct IPs
+          const uniqueIPs = await Visitor.distinct('ip', dateFilter);
+          const uniqueVisitorsCount = uniqueIPs.length;
+
+          // Unique visitors by day (for chart)
           const uniqueVisitorsByDay = await Visitor.aggregate([
-            { $match: { visitedAt: { $gte: startDate } } },
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
             {
               $group: {
                 _id: {
@@ -123,32 +146,56 @@ export async function GET(req: Request) {
             { $sort: { _id: 1 } }
           ]);
 
-          // Total unique visitors (unique IPs in the period)
-          const uniqueIPs = await Visitor.distinct('ip', { visitedAt: { $gte: startDate } });
-          const totalPageViews = await Visitor.countDocuments({ visitedAt: { $gte: startDate } });
+          // Page views by day (for chart)
+          const pageViewsByDay = await Visitor.aggregate([
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
+            {
+              $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$visitedAt' } },
+                count: { $sum: 1 }
+              }
+            },
+            { $sort: { _id: 1 } }
+          ]);
 
+          // Top pages
           const topPages = await Visitor.aggregate([
-            { $match: { visitedAt: { $gte: startDate } } },
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
             { $group: { _id: '$path', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 10 }
           ]);
 
+          // Device stats
           const deviceStats = await Visitor.aggregate([
-            { $match: { visitedAt: { $gte: startDate } } },
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
             { $group: { _id: '$device', count: { $sum: 1 } } }
           ]);
 
+          // Browser stats
           const browserStats = await Visitor.aggregate([
-            { $match: { visitedAt: { $gte: startDate } } },
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
             { $group: { _id: '$browser', count: { $sum: 1 } } }
           ]);
 
+          // Referrer stats
+          const referrerStats = await Visitor.aggregate([
+            ...(startDate ? [{ $match: { visitedAt: { $gte: startDate } } }] : []),
+            { $match: { referer: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$referer', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+          ]);
+
           return {
-            uniqueVisitors: uniqueIPs.length,
+            uniqueVisitors: uniqueVisitorsCount,
             totalPageViews,
             uniqueIPs: uniqueIPs.length,
             visitorsByDay: uniqueVisitorsByDay.reduce((acc: any, item: any) => {
+              acc[item._id] = item.count;
+              return acc;
+            }, {}),
+            pageViewsByDay: pageViewsByDay.reduce((acc: any, item: any) => {
               acc[item._id] = item.count;
               return acc;
             }, {}),
@@ -164,6 +211,10 @@ export async function GET(req: Request) {
               acc[item._id || 'unknown'] = item.count;
               return acc;
             }, {}),
+            referrerStats: referrerStats.map((item: any) => ({
+              referer: item._id || 'direct',
+              count: item.count
+            })),
           };
         } catch (error: any) {
           console.error('Visitor stats error:', error);
@@ -172,9 +223,11 @@ export async function GET(req: Request) {
             totalPageViews: 0,
             uniqueIPs: 0,
             visitorsByDay: {},
+            pageViewsByDay: {},
             topPages: [],
             deviceStats: {},
             browserStats: {},
+            referrerStats: [],
           };
         }
       })()
@@ -187,8 +240,7 @@ export async function GET(req: Request) {
     blogs.forEach(blog => {
       if (blog.viewsByDay) {
         Object.keys(blog.viewsByDay).forEach(date => {
-          const viewDate = new Date(date);
-          if (viewDate >= startDate) {
+          if (!startDate || new Date(date) >= startDate) {
             viewsByDay[date] = (viewsByDay[date] || 0) + blog.viewsByDay[date];
           }
         });
@@ -218,9 +270,12 @@ export async function GET(req: Request) {
       totalPageViews: visitorStats?.totalPageViews || 0,
       uniqueIPs: visitorStats?.uniqueIPs || 0,
       visitorsByDay: visitorStats?.visitorsByDay || {},
+      pageViewsByDay: visitorStats?.pageViewsByDay || {},
       topPages: visitorStats?.topPages || [],
       deviceStats: visitorStats?.deviceStats || {},
       browserStats: visitorStats?.browserStats || {},
+      referrerStats: visitorStats?.referrerStats || [],
+      topComments: topComments || [],
     };
 
     return NextResponse.json(result);
@@ -242,9 +297,11 @@ export async function GET(req: Request) {
       totalPageViews: 0,
       uniqueIPs: 0,
       visitorsByDay: {},
+      pageViewsByDay: {},
       topPages: [],
       deviceStats: {},
       browserStats: {},
+      referrerStats: [],
     });
   }
 }

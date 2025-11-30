@@ -3,16 +3,31 @@ import { Mail, MessageSquare, FileText, HelpCircle, Github, Twitter, Linkedin, F
 
 async function getVisitorStats() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/visitors?range=30d`, {
-      cache: 'no-store'
+    // Use stats=true for optimized response
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/visitors?range=lifetime&stats=true`, {
+      cache: 'no-store',
+      next: { revalidate: 60 } // Revalidate every 60 seconds
     });
-    if (!res.ok) return { uniqueVisitors: 0, totalPageViews: 0 };
+    if (!res.ok) {
+      // Fallback to full API if stats endpoint fails
+      const fallbackRes = await fetch(`${baseUrl}/api/visitors?range=lifetime`, {
+        cache: 'no-store'
+      });
+      if (!fallbackRes.ok) return { uniqueVisitors: 0, totalPageViews: 0 };
+      const fallbackData = await fallbackRes.json();
+      return {
+        uniqueVisitors: fallbackData.uniqueVisitors || 0,
+        totalPageViews: fallbackData.totalViews || fallbackData.totalPageViews || 0,
+      };
+    }
     const data = await res.json();
     return {
       uniqueVisitors: data.uniqueVisitors || 0,
-      totalPageViews: data.totalPageViews || 0,
+      totalPageViews: data.totalPageViews || data.totalViews || 0,
     };
-  } catch {
+  } catch (error) {
+    console.error('Footer stats error:', error);
     return { uniqueVisitors: 0, totalPageViews: 0 };
   }
 }
@@ -109,11 +124,11 @@ export default async function Footer() {
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">Visitor Stats (30 days)</span>
+                <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">Visitor Stats (Lifetime)</span>
               </div>
               <div className="space-y-1 text-xs text-blue-700 dark:text-blue-300">
                 <div className="flex items-center gap-2">
-                  <Eye className="h-3 w-3" />
+                  <Users className="h-3 w-3" />
                   <span>Unique Visitors: <strong>{stats.uniqueVisitors.toLocaleString()}</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
