@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   // Call Gemini API
   const prompt = `Generate a detailed, SEO-optimized blog post.\nTitle: ${title}\nKeywords: ${keywords || ''}\nReturn JSON with fields: content (markdown), summary, tags (array), categories (array).`;
-  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + apiKey, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),

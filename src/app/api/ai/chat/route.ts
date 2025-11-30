@@ -39,28 +39,51 @@ export async function POST(req: Request) {
       }]
     };
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geminiPayload),
-      }
-    );
+    // Try different model names and API versions (fallback approach)
+    const modelsToTry = [
+      { model: 'gemini-pro', version: 'v1beta' }, // Original model
+      { model: 'gemini-1.5-pro-latest', version: 'v1beta' },
+      { model: 'gemini-1.5-flash-latest', version: 'v1beta' },
+      { model: 'gemini-1.5-pro', version: 'v1beta' },
+      { model: 'gemini-1.5-flash', version: 'v1beta' },
+    ];
 
-    if (!geminiRes.ok) {
-      const errorData = await geminiRes.json().catch(() => ({}));
-      console.error('Gemini API error:', errorData);
-      return NextResponse.json({ 
-        error: errorData.error?.message || 'Gemini API error',
-        details: errorData 
-      }, { status: 500 });
+    let lastError: any = null;
+
+    for (const { model, version } of modelsToTry) {
+      try {
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geminiPayload),
+          }
+        );
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
+          return NextResponse.json({ content: text });
+        } else {
+          const errorData = await geminiRes.json().catch(() => ({}));
+          lastError = errorData;
+          // Continue to next model if this one fails
+          continue;
+        }
+      } catch (error: any) {
+        lastError = error;
+        continue;
+      }
     }
 
-    const geminiData = await geminiRes.json();
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
-    
-    return NextResponse.json({ content: text });
+    // If all models failed, return error
+    console.error('All Gemini models failed. Last error:', lastError);
+    return NextResponse.json({ 
+      error: lastError?.error?.message || 'Gemini API error: No available models',
+      details: lastError 
+    }, { status: 500 });
+
   } catch (error: any) {
     console.error('Chat API error:', error);
     return NextResponse.json({ 
