@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Mail, MessageSquare, FileText, HelpCircle, Github, Twitter, Linkedin, Facebook, Eye, Users } from "lucide-react";
+import { Mail, MessageSquare, FileText, HelpCircle, Github, Twitter, Linkedin, Facebook, Instagram, Youtube, Eye, Users } from "lucide-react";
+import dbConnect from "@/lib/mongodb";
+import Settings from "@/models/Settings";
 
 async function getVisitorStats() {
   try {
@@ -32,9 +34,38 @@ async function getVisitorStats() {
   }
 }
 
+async function getFooterSettings() {
+  try {
+    await dbConnect();
+    const settings = await Settings.findOne();
+    return {
+      socialMedia: settings?.socialMedia || {},
+      designBy: settings?.designBy || { name: '', portfolioUrl: '' },
+      developedBy: settings?.developedBy || { name: '', portfolioUrl: '' },
+    };
+  } catch (error) {
+    return {
+      socialMedia: {},
+      designBy: { name: '', portfolioUrl: '' },
+      developedBy: { name: '', portfolioUrl: '' },
+    };
+  }
+}
+
 export default async function Footer() {
   const stats = await getVisitorStats();
+  const footerSettings = await getFooterSettings();
+  const { socialMedia, designBy, developedBy } = footerSettings;
   
+  const socialLinks = [
+    { key: 'twitter', icon: Twitter, url: socialMedia.twitter },
+    { key: 'facebook', icon: Facebook, url: socialMedia.facebook },
+    { key: 'linkedin', icon: Linkedin, url: socialMedia.linkedin },
+    { key: 'github', icon: Github, url: socialMedia.github },
+    { key: 'instagram', icon: Instagram, url: socialMedia.instagram },
+    { key: 'youtube', icon: Youtube, url: socialMedia.youtube },
+  ].filter(link => link.url);
+
   return (
     <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 ">
       <div className="max-w-6xl mx-auto px-4 py-12">
@@ -45,20 +76,25 @@ export default async function Footer() {
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
               TechUpdatesZone Blog - Your AI-powered hub for the latest tech updates, deep-dive tutorials, and industry insights.
             </p>
-            <div className="flex gap-3">
-              <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <Github className="h-5 w-5" />
-              </a>
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex gap-3">
+                {socialLinks.map((social) => {
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={social.key}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      aria-label={social.key}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -146,21 +182,64 @@ export default async function Footer() {
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-gray-600 dark:text-gray-400 text-sm">
-              &copy; {new Date().getFullYear()} TechUpdatesZone Blog. All rights reserved.
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                &copy; {new Date().getFullYear()} TechUpdatesZone Blog. All rights reserved.
+              </div>
+              <div className="flex gap-6 text-sm">
+                <Link href="/privacy-policy" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms-of-service" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Terms of Service
+                </Link>
+                <Link href="/report-issue" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Report Issue
+                </Link>
+              </div>
             </div>
-            <div className="flex gap-6 text-sm">
-              <Link href="/privacy-policy" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms-of-service" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/report-issue" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Report Issue
-              </Link>
-            </div>
+            {(designBy.name || developedBy.name) && (
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+                {designBy.name && (
+                  <div className="flex items-center gap-1">
+                    <span>Designed by</span>
+                    {designBy.portfolioUrl ? (
+                      <a
+                        href={designBy.portfolioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {designBy.name}
+                      </a>
+                    ) : (
+                      <span className="font-semibold">{designBy.name}</span>
+                    )}
+                  </div>
+                )}
+                {designBy.name && developedBy.name && (
+                  <span className="hidden md:inline">•</span>
+                )}
+                {developedBy.name && (
+                  <div className="flex items-center gap-1">
+                    <span>Developed by</span>
+                    {developedBy.portfolioUrl ? (
+                      <a
+                        href={developedBy.portfolioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {developedBy.name}
+                      </a>
+                    ) : (
+                      <span className="font-semibold">{developedBy.name}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

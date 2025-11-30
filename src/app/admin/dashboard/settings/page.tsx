@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, Twitter, Facebook, Linkedin, Github, Instagram, Youtube, Palette, Code } from "lucide-react";
 
 interface WebsiteSettings {
   enableChatbot: boolean;
@@ -12,6 +12,22 @@ interface WebsiteSettings {
   enableAnalytics: boolean;
   siteName: string;
   siteDescription: string;
+  socialMedia: {
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    github?: string;
+    instagram?: string;
+    youtube?: string;
+  };
+  designBy: {
+    name: string;
+    portfolioUrl: string;
+  };
+  developedBy: {
+    name: string;
+    portfolioUrl: string;
+  };
 }
 
 export default function SettingsPage() {
@@ -25,18 +41,48 @@ export default function SettingsPage() {
     enableNewsletter: true,
     enableAnalytics: true,
     siteName: 'TechUpdatesZone Blog',
-    siteDescription: 'TechUpdatesZone Blog — AI-powered tech news, tutorials, and insights with Google Gemini integration.'
+    siteDescription: 'TechUpdatesZone Blog — AI-powered tech news, tutorials, and insights with Google Gemini integration.',
+    socialMedia: {
+      twitter: '',
+      facebook: '',
+      linkedin: '',
+      github: '',
+      instagram: '',
+      youtube: '',
+    },
+    designBy: {
+      name: '',
+      portfolioUrl: '',
+    },
+    developedBy: {
+      name: '',
+      portfolioUrl: '',
+    },
   });
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
-  // Check if user is admin
+  // Check if user is admin and fetch settings
   useEffect(() => {
-    async function checkAuth() {
+    async function checkAuthAndFetchSettings() {
       try {
         const response = await fetch('/api/auth/admin-session');
         if (response.ok) {
           const data = await response.json();
           setAdminUser(data.user);
+          
+          // Fetch settings
+          const settingsRes = await fetch('/api/admin/settings');
+          if (settingsRes.ok) {
+            const settingsData = await settingsRes.json();
+            setSettings(prev => ({
+              ...prev,
+              ...settingsData,
+              socialMedia: settingsData.socialMedia || prev.socialMedia,
+              designBy: settingsData.designBy || prev.designBy,
+              developedBy: settingsData.developedBy || prev.developedBy,
+            }));
+          }
         } else {
           router.push('/admin');
         }
@@ -44,9 +90,10 @@ export default function SettingsPage() {
         router.push('/admin');
       } finally {
         setCheckingAuth(false);
+        setFetching(false);
       }
     }
-    checkAuth();
+    checkAuthAndFetchSettings();
   }, [router]);
 
   async function handleSaveSettings() {
@@ -71,7 +118,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (checkingAuth) {
+  if (checkingAuth || fetching) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -169,6 +216,113 @@ export default function SettingsPage() {
                   rows={3}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Twitter className="h-5 w-5 text-blue-500" />
+              Social Media Links
+            </h3>
+            <div className="space-y-4">
+              {[
+                { key: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'text-blue-400' },
+                { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-600' },
+                { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+                { key: 'github', label: 'GitHub', icon: Github, color: 'text-gray-800 dark:text-gray-200' },
+                { key: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+                { key: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
+              ].map((social) => {
+                const Icon = social.icon;
+                return (
+                  <div key={social.key} className="flex items-center gap-3">
+                    <Icon className={`h-5 w-5 ${social.color}`} />
+                    <input
+                      type="url"
+                      placeholder={`${social.label} URL`}
+                      value={settings.socialMedia[social.key as keyof typeof settings.socialMedia] || ''}
+                      onChange={(e) => setSettings(prev => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          [social.key]: e.target.value
+                        }
+                      }))}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Design & Developed By */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Footer Credits
+            </h3>
+            <div className="space-y-4">
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Palette className="h-5 w-5 text-purple-500" />
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Designed By
+                  </label>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Designer Name"
+                    value={settings.designBy.name}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      designBy: { ...prev.designBy, name: e.target.value }
+                    }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Portfolio URL"
+                    value={settings.designBy.portfolioUrl}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      designBy: { ...prev.designBy, portfolioUrl: e.target.value }
+                    }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Code className="h-5 w-5 text-green-500" />
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Developed By
+                  </label>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Developer Name"
+                    value={settings.developedBy.name}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      developedBy: { ...prev.developedBy, name: e.target.value }
+                    }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Portfolio URL"
+                    value={settings.developedBy.portfolioUrl}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      developedBy: { ...prev.developedBy, portfolioUrl: e.target.value }
+                    }))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
           </div>
