@@ -25,6 +25,25 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        http: false,
+        https: false,
+        crypto: false,
+        stream: false,
+        querystring: false,
+        url: false,
+        zlib: false,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+      };
+    }
+    return config;
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },

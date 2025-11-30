@@ -8,7 +8,7 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
