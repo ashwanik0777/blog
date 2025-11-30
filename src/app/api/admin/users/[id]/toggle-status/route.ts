@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import dbConnect from '../../../../../../lib/mongodb';
-import User from '../../../../../../models/User';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {

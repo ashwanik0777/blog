@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '../../../../lib/mongodb';
-import Blog from '../../../../models/Blog';
+import dbConnect from '@/lib/mongodb';
+import Blog from '@/models/Blog';
 import { getToken } from 'next-auth/jwt';
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
