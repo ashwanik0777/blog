@@ -43,7 +43,7 @@ export default async function Home() {
         </Link>
         <div className="flex gap-6">
           <Link href="/blog" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors">Blogs</Link>
-          <Link href="/admin" className="text-gray-800 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline font-medium transition-colors">Admin</Link>
+          {/* <Link href="/admin" className="text-gray-800 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline font-medium transition-colors">Admin</Link> */}
         </div>
       </nav>
 
