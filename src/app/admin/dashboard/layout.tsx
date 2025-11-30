@@ -70,7 +70,7 @@ export default function DashboardLayout({
   // Menu structure with colors for each icon
   const menuItems: MenuItem[] = [
     {
-      id: "dashboard",
+      id: "/",
       label: "Dashboard",
       icon: LayoutDashboard,
       color: "text-purple-400",

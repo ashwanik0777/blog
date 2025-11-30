@@ -16,13 +16,14 @@ interface Blog {
 }
 
 interface AdminBlogEditorProps {
-  blog?: Blog;
-  onSave: (blog: Blog) => void;
-  onCancel: () => void;
-  mode: 'create' | 'edit';
+  blog?: Blog | null;
+  onSave?: (blog: Blog) => void;
+  onCancel?: () => void;
+  onClose?: () => void;
+  mode?: 'create' | 'edit';
 }
 
-export default function AdminBlogEditor({ blog, onSave, onCancel, mode }: AdminBlogEditorProps) {
+export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode = blog ? 'edit' : 'create' }: AdminBlogEditorProps) {
   const [formData, setFormData] = useState({
     title: blog?.title || "",
     slug: blog?.slug || "",
@@ -107,8 +108,38 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, mode }: AdminB
         blogData._id = blog._id;
       }
 
-      onSave(blogData as Blog);
-      setMessage(`${mode === 'create' ? 'Created' : 'Updated'} successfully!`);
+      // If onSave is provided, use it; otherwise make API call directly
+      if (onSave) {
+        onSave(blogData as Blog);
+      } else {
+        // Make API call directly
+        const url = blog ? `/api/blog/${blog.slug}` : '/api/blog';
+        const method = blog ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...blogData,
+            status: blogData.published ? 'approved' : 'draft'
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save blog');
+        }
+
+        const savedBlog = await response.json();
+        setMessage(`${mode === 'create' ? 'Created' : 'Updated'} successfully!`);
+        
+        // Call onClose if provided
+        if (onClose) {
+          setTimeout(() => {
+            onClose();
+          }, 1000);
+        }
+      }
     } catch (error) {
       setError(`Error ${mode === 'create' ? 'creating' : 'updating'} blog`);
     } finally {
@@ -127,7 +158,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, mode }: AdminB
           {mode === 'create' ? 'Create New Blog' : 'Edit Blog'}
         </h2>
         <button
-          onClick={onCancel}
+          onClick={onCancel || onClose}
           className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
           ✕
@@ -315,7 +346,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, mode }: AdminB
           </button>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={onCancel || onClose}
             className="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold"
           >
             Cancel

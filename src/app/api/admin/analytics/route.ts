@@ -4,29 +4,38 @@ import Blog from '@/models/Blog';
 import User from '@/models/User';
 import Visitor from '@/models/Visitor';
 import Issue from '@/models/Issue';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    // Check admin authentication
-    const cookieStore = await cookies();
-    const token = cookieStore.get('next-auth.session-token');
+    // Check admin authentication using NextAuth
+    const session = await getServerSession(authOptions);
     
-    if (!token) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-    }
-    
-    try {
-      const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-      if (decoded.role !== 'admin') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-      }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
+    if (!session || !session.user || (session.user as any).role !== 'admin') {
+      // Return empty data instead of error to prevent frontend crashes
+      return NextResponse.json({ 
+        totalBlogs: 0,
+        publishedBlogs: 0,
+        totalUsers: 0,
+        totalViews: 0,
+        totalSubscribers: 0,
+        totalIssues: 0,
+        pendingIssues: 0,
+        topBlogs: [],
+        userGrowth: [],
+        viewsByDay: {},
+        uniqueVisitors: 0,
+        totalPageViews: 0,
+        uniqueIPs: 0,
+        visitorsByDay: {},
+        topPages: [],
+        deviceStats: {},
+        browserStats: {},
+      });
     }
 
     const url = new URL(req.url!);
@@ -94,7 +103,8 @@ export async function GET(req: Request) {
       // Visitor stats
       (async () => {
         try {
-          const uniqueVisitors = await Visitor.aggregate([
+          // Get unique visitors by IP per day
+          const uniqueVisitorsByDay = await Visitor.aggregate([
             { $match: { visitedAt: { $gte: startDate } } },
             {
               $group: {
@@ -113,8 +123,9 @@ export async function GET(req: Request) {
             { $sort: { _id: 1 } }
           ]);
 
-          const totalPageViews = await Visitor.countDocuments({ visitedAt: { $gte: startDate } });
+          // Total unique visitors (unique IPs in the period)
           const uniqueIPs = await Visitor.distinct('ip', { visitedAt: { $gte: startDate } });
+          const totalPageViews = await Visitor.countDocuments({ visitedAt: { $gte: startDate } });
 
           const topPages = await Visitor.aggregate([
             { $match: { visitedAt: { $gte: startDate } } },
@@ -134,15 +145,15 @@ export async function GET(req: Request) {
           ]);
 
           return {
-            uniqueVisitors: uniqueVisitors.length,
+            uniqueVisitors: uniqueIPs.length,
             totalPageViews,
             uniqueIPs: uniqueIPs.length,
-            visitorsByDay: uniqueVisitors.reduce((acc: any, item: any) => {
+            visitorsByDay: uniqueVisitorsByDay.reduce((acc: any, item: any) => {
               acc[item._id] = item.count;
               return acc;
             }, {}),
             topPages: topPages.map((item: any) => ({
-              page: item._id,
+              page: item._id || 'unknown',
               views: item.count
             })),
             deviceStats: deviceStats.reduce((acc: any, item: any) => {
@@ -154,7 +165,8 @@ export async function GET(req: Request) {
               return acc;
             }, {}),
           };
-        } catch (error) {
+        } catch (error: any) {
+          console.error('Visitor stats error:', error);
           return {
             uniqueVisitors: 0,
             totalPageViews: 0,

@@ -448,14 +448,18 @@ export default function AdminDashboard() {
 
       {/* Blog Editor Modal */}
       {showEditor && (
-        <AdminBlogEditor
-          blog={editingBlog}
-          onClose={() => {
-            setShowEditor(false);
-            setEditingBlog(null);
-            fetchBlogs();
-          }}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
+            <AdminBlogEditor
+              blog={editingBlog}
+              onClose={() => {
+                setShowEditor(false);
+                setEditingBlog(null);
+                fetchBlogs();
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
