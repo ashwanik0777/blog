@@ -187,6 +187,32 @@ export default async function Footer() {
               <div className="text-gray-600 dark:text-gray-400 text-sm">
                 &copy; {new Date().getFullYear()} TechUpdatesZone Blog. All rights reserved.
               </div>
+                <div>
+ {(designBy.name || developedBy.name) && (
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs text-gray-500 dark:text-gray-400 ">
+                {designBy.name && (
+                  <div className="flex items-center gap-1">
+                    <span>Designed & Developed by</span>
+                    {designBy.portfolioUrl ? (
+                      <a
+                        href={designBy.portfolioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {designBy.name}
+                      </a>
+                    ) : (
+                      <span className="font-semibold"></span>
+                    )}
+                  </div>
+                )}
+                
+              </div>
+            )}
+
+
+                </div>
               <div className="flex gap-6 text-sm">
                 <Link href="/privacy-policy" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   Privacy Policy
@@ -199,47 +225,6 @@ export default async function Footer() {
                 </Link>
               </div>
             </div>
-            {(designBy.name || developedBy.name) && (
-              <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
-                {designBy.name && (
-                  <div className="flex items-center gap-1">
-                    <span>Designed by</span>
-                    {designBy.portfolioUrl ? (
-                      <a
-                        href={designBy.portfolioUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {designBy.name}
-                      </a>
-                    ) : (
-                      <span className="font-semibold">{designBy.name}</span>
-                    )}
-                  </div>
-                )}
-                {designBy.name && developedBy.name && (
-                  <span className="hidden md:inline">•</span>
-                )}
-                {developedBy.name && (
-                  <div className="flex items-center gap-1">
-                    <span>Developed by</span>
-                    {developedBy.portfolioUrl ? (
-                      <a
-                        href={developedBy.portfolioUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {developedBy.name}
-                      </a>
-                    ) : (
-                      <span className="font-semibold">{developedBy.name}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
