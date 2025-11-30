@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 
 export async function POST(req: Request) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== 'admin') {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user || (session.user as any).role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const { imageUrl } = await req.json();
+  const { imageUrl, context } = await req.json();
   if (!imageUrl) {
     return NextResponse.json({ error: 'Missing imageUrl' }, { status: 400 });
   }
   // Call Gemini API
-  const prompt = `Describe the following image in a concise, SEO-friendly alt text for a blog.\nImage URL: ${imageUrl}`;
+  const prompt = `Describe the following image in a concise, SEO-friendly alt text for a blog (max 125 characters).
+${context ? `Context: ${context}\n` : ''}Image URL: ${imageUrl}`;
   const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -25,5 +27,5 @@ export async function POST(req: Request) {
   try {
     alt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
   } catch {}
-  return NextResponse.json({ alt });
+  return NextResponse.json({ altText: alt });
 } 

@@ -233,7 +233,7 @@ export default function SubAdminsPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
           >
             <UserPlus className="w-5 h-5" />
             <span>Create Sub-Admin</span>
@@ -357,7 +357,7 @@ export default function SubAdminsPage() {
                   <tr key={subAdmin._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                           {subAdmin.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">
@@ -581,7 +581,7 @@ export default function SubAdminsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
                 >
                   {editingSubAdmin ? 'Update Sub-Admin' : 'Create Sub-Admin'}
                 </button>

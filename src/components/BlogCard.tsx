@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 function getReadingTime(content: string) {
@@ -39,7 +40,7 @@ export default function BlogCard({ blog }: { blog: any }) {
         </p>
         <div className="flex items-center gap-2 mt-2 mb-3">
           {blog.author?.image && (
-            <img src={blog.author.image} alt={blog.author.name} className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+            <Image src={blog.author.image} alt={blog.author.name} width={28} height={28} className="rounded-full object-cover border border-gray-200 dark:border-gray-700" />
           )}
           <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">By {blog.author?.name || "Unknown"}</span>
           <span className="text-xs text-gray-500 dark:text-gray-400">• {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>

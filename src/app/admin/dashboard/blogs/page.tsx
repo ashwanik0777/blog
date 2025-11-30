@@ -217,7 +217,7 @@ export default function BlogManagementPage() {
           </div>
           <button
             onClick={handleCreateNew}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             <span>Create New Blog</span>

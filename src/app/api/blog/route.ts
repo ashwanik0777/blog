@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '../../../lib/mongodb';
 import Blog from '../../../models/Blog';
 import User from '../../../models/User';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../lib/authOptions';
 
 export async function GET(req: Request) {
   try {
@@ -16,20 +16,11 @@ export async function GET(req: Request) {
     const skip = (page - 1) * pageSize;
 
   if (isAdmin) {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('next-auth.session-token');
+    // Check admin authentication using NextAuth
+    const session = await getServerSession(authOptions);
     
-    if (!token) {
+    if (!session || !session.user || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-    }
-    
-    try {
-      const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-      if (decoded.role !== 'admin') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-      }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
     }
 
     const total = await Blog.countDocuments();
@@ -60,27 +51,16 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get('next-auth.session-token');
+    // Check admin authentication using NextAuth
+    const session = await getServerSession(authOptions);
     
-    if (!token) {
+    if (!session || !session.user || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-    }
-    
-    let decoded;
-    try {
-      decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-      if (decoded.role !== 'admin') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-      }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
     }
 
     const data = await req.json();
 
-    const User = (await import('../../../models/User')).default;
-    const user = await User.findOne({ email: decoded.email });
+    const user = await User.findOne({ email: session.user.email });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

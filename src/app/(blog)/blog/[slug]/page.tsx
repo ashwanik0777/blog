@@ -2,6 +2,7 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import { Metadata } from "next";
 import { headers } from "next/headers";
+import Image from "next/image";
 import Comments from "@/components/Comments";
 import Footer from "@/components/Footer";
 import CopyButton from "@/components/CopyButton";
@@ -157,12 +158,15 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
           {/* Featured Image */}
           {blog.featuredImage && (
             <div className="relative w-full h-64 md:h-96 overflow-hidden">
-              <img
+              <Image
                 src={blog.featuredImage}
                 alt={blog.title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-black/40" />
               {blog.featured && (
                 <div className="absolute top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
@@ -202,7 +206,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
             {/* Summary/Excerpt */}
             {(blog.summary || blog.excerpt) && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-4 border-blue-600 p-6 mb-10 rounded-r-lg shadow-sm">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 p-6 mb-10 rounded-r-lg shadow-sm">
                 <div className="flex items-start gap-3">
                   <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
                   <div>

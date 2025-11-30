@@ -302,7 +302,7 @@ export default function Editor({ initialData = {}, onSave }: { initialData?: any
               />
               <button
                 type="button"
-                className="bg-gradient-to-r from-gray-500 to-blue-500 text-white px-3 py-2 rounded hover:from-gray-600 hover:to-blue-600"
+                className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
                 onClick={handleAIAltText}
                 disabled={aiAltLoading}
               >
@@ -331,7 +331,7 @@ export default function Editor({ initialData = {}, onSave }: { initialData?: any
       </div>
       <button
         type="button"
-        className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded hover:from-purple-600 hover:to-blue-600"
+        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
         onClick={handleAIGenerate}
         disabled={aiLoading || !title}
       >
@@ -339,7 +339,7 @@ export default function Editor({ initialData = {}, onSave }: { initialData?: any
       </button>
       <button
         type="button"
-        className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded hover:from-green-600 hover:to-blue-600"
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         onClick={handleAISuggestTags}
         disabled={aiTagsLoading || !content}
       >
@@ -347,7 +347,7 @@ export default function Editor({ initialData = {}, onSave }: { initialData?: any
       </button>
       <button
         type="button"
-        className="bg-gradient-to-r from-yellow-500 to-pink-500 text-white px-4 py-2 rounded hover:from-yellow-600 hover:to-pink-600"
+        className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
         onClick={handleAISummary}
         disabled={aiSummaryLoading || !content}
       >

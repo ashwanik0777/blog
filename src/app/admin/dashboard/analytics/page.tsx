@@ -357,7 +357,7 @@ export default function AnalyticsPage() {
             {Object.entries(analyticsData.viewsByDay).map(([date, views], index) => (
               <div key={date} className="flex-1 flex flex-col items-center">
                 <div 
-                  className="w-full bg-gradient-to-t from-blue-500 to-blue-600 rounded-t"
+                  className="w-full bg-blue-600 rounded-t"
                   style={{ height: `${(views / Math.max(...Object.values(analyticsData.viewsByDay))) * 200}px` }}
                 ></div>
                 <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -386,7 +386,7 @@ export default function AnalyticsPage() {
             {analyticsData.topBlogs.map((blog, index) => (
               <div key={blog.slug} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {index + 1}
                   </div>
                   <div>

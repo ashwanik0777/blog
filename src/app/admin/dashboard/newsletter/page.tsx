@@ -284,14 +284,14 @@ export default function NewsletterPage() {
           <div className="flex space-x-3">
             <button
               onClick={() => setShowCreateSubscriber(true)}
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
+              className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
             >
               <Plus className="w-5 h-5" />
               <span>Add Subscriber</span>
             </button>
             <button
               onClick={() => setShowCreateNewsletter(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
             >
               <Send className="w-5 h-5" />
               <span>Create Newsletter</span>
@@ -444,7 +444,7 @@ export default function NewsletterPage() {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                           {subscriber.email.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">
@@ -606,7 +606,7 @@ export default function NewsletterPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
                 >
                   Create Newsletter
                 </button>
@@ -690,7 +690,7 @@ export default function NewsletterPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-semibold"
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-semibold"
                 >
                   Add Subscriber
                 </button>
