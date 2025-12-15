@@ -163,52 +163,6 @@ Visit `http://localhost:3000` (public) and `http://localhost:3000/admin` (dashbo
 
 ---
 
-## 🔧 Configuration
-
-```env
-# Core
-NODE_ENV=development
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-
-# Database
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/blog
-
-# Authentication
-NEXTAUTH_SECRET=replace_me
-NEXTAUTH_URL=http://localhost:3000
-
-# Admin bootstrap
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=supersecurepassword
-ADMIN_NAME=Platform Admin
-
-# OAuth (optional)
-GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxxx
-
-# Gemini AI
-GEMINI_API_KEY=your_gemini_api_key
-
-# Optional providers
-REDIS_URL=redis://127.0.0.1:6379
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=no-reply@example.com
-SMTP_PASS=app_password
-```
-
-Generate secure secrets:
-
-```bash
-openssl rand -base64 32                      # NEXTAUTH_SECRET
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-> Admin bootstrap credentials feed `scripts/setup-admin-and-blogs.js`; populate `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and optional `ADMIN_NAME` before running any seed script.
-
-Use `.env.local`, `.env.staging`, `.env.production` per environment.
-
----
 
 ## 🧪 Run & Test Commands
 
