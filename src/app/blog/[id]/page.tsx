@@ -10,9 +10,12 @@ import Link from "next/link";
 import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart } from "lucide-react";
 
 async function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
   const headersList = await headers();
   const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${host}`;
 }
 

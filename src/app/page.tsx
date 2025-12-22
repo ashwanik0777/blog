@@ -4,10 +4,15 @@ import Footer from "@/components/Footer";
 import { headers } from "next/headers";
 import { Sparkles, TrendingUp, ShieldCheck, Zap, BookOpen, Code, Rocket } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 async function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
   const headersList = await headers();
   const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${host}`;
 }
 

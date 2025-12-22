@@ -17,14 +17,21 @@ export default function BlogCard({ blog }: { blog: any }) {
       className="bg-white dark:bg-gray-800 rounded-xl shadow p-0 flex flex-col overflow-hidden group border border-gray-100 dark:border-gray-800"
     >
       <div className="relative w-full h-48 overflow-hidden">
-        {blog.featuredImage && (
-          <img
+        {blog.featuredImage ? (
+          <Image
             src={blog.featuredImage}
             alt={blog.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={blog.featured}
           />
+        ) : (
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <span className="text-gray-400 text-4xl">📝</span>
+          </div>
         )}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
         {blog.featured && (
           <div className="absolute top-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
             ⭐ Featured
@@ -75,8 +82,8 @@ export default function BlogCard({ blog }: { blog: any }) {
           ))}
         </div>
         <Link
-          href={`/blog/${blog.slug}`}
-          className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
+          href={`/blog/${blog._id}`}
+          className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all text-center"
         >
           Read more
         </Link>

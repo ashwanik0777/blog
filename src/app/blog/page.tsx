@@ -1,10 +1,16 @@
-import BlogCard from "@/components/BlogCard";
 import { headers } from "next/headers";
+import BlogList from "@/components/BlogList";
+import Footer from "@/components/Footer";
+
+export const dynamic = 'force-dynamic';
 
 async function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
   const headersList = await headers();
   const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${host}`;
 }
 
@@ -20,7 +26,7 @@ async function getBlogs() {
     }
     
     const data = await response.json();
-    return data.blogs || []; // Extract blogs array from the response object
+    return data.blogs || []; 
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return [];
@@ -38,23 +44,18 @@ export default async function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <main className="max-w-6xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 flex flex-col">
+      <main className="max-w-6xl mx-auto py-8 px-4 flex-grow w-full">
         {error ? (
-          <div className="p-8 text-center text-red-500">{error}</div>
+          <div className="p-8 text-center text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <p className="font-semibold">{error}</p>
+            <p className="text-sm mt-2">Please try again later.</p>
+          </div>
         ) : (
-          <>
-            <h1 className="text-3xl font-bold mb-6">Latest Blogs</h1>
-            <div className="grid md:grid-cols-3 gap-6">
-              {blogs.length === 0 ? (
-                <div className="col-span-3 text-gray-500 dark:text-gray-400">No blogs found.</div>
-              ) : (
-                blogs.map((blog: any) => <BlogCard key={blog._id} blog={blog} />)
-              )}
-            </div>
-          </>
+          <BlogList initialBlogs={blogs} />
         )}
       </main>
+
     </div>
   );
 }
