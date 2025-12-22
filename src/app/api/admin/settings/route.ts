@@ -22,7 +22,6 @@ export async function GET(req: Request) {
         chatbotEnabled: true,
         socialMedia: {},
         designBy: { name: '', portfolioUrl: '' },
-        developedBy: { name: '', portfolioUrl: '' },
       });
     }
 
@@ -36,7 +35,6 @@ export async function GET(req: Request) {
       siteDescription: process.env.SITE_DESCRIPTION || 'TechUpdatesZone Blog — AI-powered tech news, tutorials, and insights with Google Gemini integration.',
       socialMedia: settings.socialMedia || {},
       designBy: settings.designBy || { name: '', portfolioUrl: '' },
-      developedBy: settings.developedBy || { name: '', portfolioUrl: '' },
     });
   } catch (error: any) {
     console.error('Settings GET error:', error);
@@ -63,7 +61,6 @@ export async function POST(req: Request) {
         chatbotEnabled: data.enableChatbot ?? true,
         socialMedia: data.socialMedia || {},
         designBy: data.designBy || { name: '', portfolioUrl: '' },
-        developedBy: data.developedBy || { name: '', portfolioUrl: '' },
       });
     } else {
       settings.chatbotEnabled = data.enableChatbot ?? settings.chatbotEnabled;
@@ -72,9 +69,6 @@ export async function POST(req: Request) {
       }
       if (data.designBy) {
         settings.designBy = { ...settings.designBy, ...data.designBy };
-      }
-      if (data.developedBy) {
-        settings.developedBy = { ...settings.developedBy, ...data.developedBy };
       }
       await settings.save();
     }

@@ -268,7 +268,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <Palette className="h-5 w-5 text-purple-500" />
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Designed By
+                    Design & Developed By
                   </label>
                 </div>
                 <div className="space-y-3">
@@ -289,36 +289,6 @@ export default function SettingsPage() {
                     onChange={(e) => setSettings(prev => ({
                       ...prev,
                       designBy: { ...prev.designBy, portfolioUrl: e.target.value }
-                    }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <Code className="h-5 w-5 text-green-500" />
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Developed By
-                  </label>
-                </div>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Developer Name"
-                    value={settings.developedBy.name}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      developedBy: { ...prev.developedBy, name: e.target.value }
-                    }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <input
-                    type="url"
-                    placeholder="Portfolio URL"
-                    value={settings.developedBy.portfolioUrl}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      developedBy: { ...prev.developedBy, portfolioUrl: e.target.value }
                     }))}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
