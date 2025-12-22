@@ -29,21 +29,32 @@ async function getBlogs() {
 
 export default async function BlogPage() {
   let blogs = [];
+  let error = null;
+  
   try {
     blogs = await getBlogs();
   } catch (e) {
-    return <div className="p-8 text-center text-red-500">Failed to load blogs.</div>;
+    error = "Failed to load blogs.";
   }
+
   return (
-    <main className="max-w-6xl mx-auto py-8 px-4 ">
-      <h1 className="text-3xl font-bold mb-6">Latest Blogs</h1>
-      <div className="grid md:grid-cols-3 gap-6">
-        {blogs.length === 0 ? (
-          <div className="col-span-3 text-gray-500">No blogs found.</div>
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+      <main className="max-w-6xl mx-auto py-8 px-4">
+        {error ? (
+          <div className="p-8 text-center text-red-500">{error}</div>
         ) : (
-          blogs.map((blog: any) => <BlogCard key={blog._id} blog={blog} />)
+          <>
+            <h1 className="text-3xl font-bold mb-6">Latest Blogs</h1>
+            <div className="grid md:grid-cols-3 gap-6">
+              {blogs.length === 0 ? (
+                <div className="col-span-3 text-gray-500 dark:text-gray-400">No blogs found.</div>
+              ) : (
+                blogs.map((blog: any) => <BlogCard key={blog._id} blog={blog} />)
+              )}
+            </div>
+          </>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
