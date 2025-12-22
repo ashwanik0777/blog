@@ -2,13 +2,14 @@
 
 <div align="center">
 
-![TechUpdatesZone Blog](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-15.4-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-2f74c0?style=for-the-badge&logo=typescript)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-0fa14c?style=for-the-badge&logo=mongodb)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.0-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
 ![Gemini AI](https://img.shields.io/badge/Gemini-AI-blueviolet?style=for-the-badge&logo=google)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Uploads-blue?style=for-the-badge&logo=cloudinary)
 
-**An end-to-end, AI-native publishing platform with admin tooling, analytics, and multi-channel deployment in one repo.**
+**An end-to-end, AI-native publishing platform with admin tooling, analytics, and multi-channel deployment.**
 
 [Live Demo](#) • [Start Building](#-getting-started) • [API Reference](#-api-reference) • [Deployment](#-deployment--operations)
 
@@ -18,12 +19,12 @@
 
 ## 📚 Why This README?
 
-All platform docs (`API_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DEPLOYMENT.md`, `USER_GUIDE.md`, and the legacy README) now live here. Use this single file for:
+This document serves as the single source of truth for the project, covering:
 
 - Product & feature overview
 - Architecture and data contracts
 - Local development + environment setup
-- API reference and SDK notes
+- API reference
 - User/admin workflows & AI usage
 - Deployment, security, monitoring, and troubleshooting
 
@@ -49,12 +50,12 @@ All platform docs (`API_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DEPLOYMENT.md`, `
 
 ## 🌟 Overview & Feature Set
 
-- **AI-native authoring:** Gemini-powered generation, summaries, tags, alt text, moderation, chatbot.
-- **Full CMS:** Drafts, publishing, featured media, comments, newsletter capture, admin workflows.
-- **Analytics suite:** Blog KPIs, user growth, views-by-day, traffic segmentation.
+- **AI-native authoring:** Gemini-powered generation, summaries, tags, alt text, moderation, and chatbot.
+- **Full CMS:** Drafts, publishing, featured media (Cloudinary), custom comments system, newsletter capture.
+- **Admin Dashboard:** Comprehensive analytics (visitors, views), user management, blog management, and settings.
 - **Role-based control:** Admin/editor/reader roles with toggleable user states.
-- **Modern UX:** Next.js App Router, responsive UI, dark mode, Tailwind + Framer Motion polish.
-- **Enterprise-ready:** NextAuth, rate limiting, consistent error schema, deployment blueprints.
+- **Modern UX:** Next.js 15 App Router, responsive UI, dark mode, Tailwind 4 + Framer Motion animations.
+- **Enterprise-ready:** NextAuth (Google + Credentials), visitor tracking, issue reporting system.
 
 ---
 
@@ -71,8 +72,8 @@ graph TB
     subgraph "Next.js App"
         D["App Router Pages"]
         E["Shared Components"]
-        F["API Routes + Server Actions"]
-        G["Middleware"]
+        F["API Routes (App Router)"]
+        G["Socket.io Server (Pages Router)"]
     end
 
     subgraph "Core Services"
@@ -84,7 +85,7 @@ graph TB
 
     subgraph "Data Stores"
         L["MongoDB Atlas"]
-        M["Edge Cache / CDN"]
+        M["Cloudinary (Images)"]
     end
 
     subgraph "External Providers"
@@ -98,27 +99,26 @@ graph TB
     D --> F --> I --> L
     F --> H --> O
     F --> J --> N
-    G --> F
-    K --> L
     F --> M
 ```
 
 ### Layer Responsibilities
 - **Presentation:** `src/app`, `src/components` for layouts, route groups, reusable UI.
-- **Application:** `src/app/api`, middleware, authentication, validation, and orchestrations.
+- **Application:** `src/app/api`, authentication, validation, and orchestrations.
 - **Business Logic:** API route handlers invoking services (blogs, users, newsletter, analytics).
-- **Data Access:** `src/models`, `src/lib/mongodb*.ts` for schemas, indexing, pooling.
-- **External Integrations:** Gemini AI, Google OAuth, optional SMTP/Redis hooks.
+- **Data Access:** `src/models`, `src/lib/mongodb*.ts` for schemas and connections.
+- **External Integrations:** Gemini AI, Google OAuth, Cloudinary.
 
 ### Technology Stack
 
 | Layer | Technologies |
 |-------|--------------|
-| Frontend | Next.js 15 (App Router), React 18, TypeScript, Tailwind, Framer Motion, React Hook Form |
-| Backend | Node.js 18, Next.js API Routes, NextAuth, Mongoose |
-| Database | MongoDB Atlas (indexes on slug, author, tags, status, published) |
+| Frontend | Next.js 15.4 (App Router), React 19, TypeScript, Tailwind CSS 4, Framer Motion |
+| Backend | Node.js, Next.js API Routes, NextAuth, Mongoose, Socket.io |
+| Database | MongoDB Atlas |
+| Storage | Cloudinary (Image Uploads) |
 | AI | Google Gemini (generation, moderation, summarization, chatbot, alt text) |
-| Tooling | ESLint, Prettier, Jest/RTL, Cypress, Husky, GitHub Actions |
+| Tooling | ESLint, Prettier |
 
 ---
 
@@ -126,16 +126,22 @@ graph TB
 
 ```
 ├── src/
-│   ├── app/                 # Public, admin, auth, API routes, sitemaps, middleware
-│   ├── api/                 # Client helpers for internal APIs
-│   ├── components/          # Navbar, Editor, Chatbot, Tables, etc.
-│   ├── lib/                 # Auth options, Mongo connection helpers
-│   ├── models/              # Blog, User, Comment, Settings schemas
-│   └── middleware.ts        # Auth + rate limiting middleware
-├── scripts/                 # Seeding + admin utilities
+│   ├── app/                 # App Router: Public, admin, auth, API routes
+│   │   ├── (admin)/         # Admin dashboard routes
+│   │   ├── (auth)/          # Authentication pages
+│   │   ├── (blog)/          # Public blog pages
+│   │   ├── api/             # Backend API endpoints
+│   │   ├── setup/           # Initial setup page
+│   │   └── ...
+│   ├── components/          # Reusable UI components (AdminBlogEditor, Chatbot, etc.)
+│   ├── lib/                 # Utilities: Auth options, MongoDB connection
+│   ├── models/              # Mongoose Schemas: Blog, User, Comment, Settings, etc.
+│   └── middleware.ts        # Middleware configuration
+├── pages/
+│   └── api/                 # Pages Router API (Socket.io)
 ├── public/                  # Static assets
 ├── package.json             # npm scripts + deps
-└── README.md                # ← single source for all docs
+└── README.md                # Project documentation
 ```
 
 ---
@@ -147,22 +153,62 @@ graph TB
 - npm **10+**
 - MongoDB Atlas cluster (or local Mongo)
 - Google Gemini API key
-- (Optional) Google OAuth client
+- Cloudinary Account
+- Google OAuth Credentials (optional)
 
 ### Bootstrap
 
-```bash
-git clone https://github.com/yourusername/gemini-ai-blog.git
-cd gemini-ai-blog
-npm install
-cp .env.example .env.local    # populate with your secrets
-npm run dev
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/gemini-ai-blog.git
+   cd gemini-ai-blog
+   ```
 
-Visit `http://localhost:3000` (public) and `http://localhost:3000/admin` (dashboard).
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment:**
+   Create a `.env.local` file in the root directory and add the following variables:
+
+   ```env
+   # Database
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/blog
+
+   # Authentication
+   NEXTAUTH_SECRET=your_super_secret_key
+   NEXTAUTH_URL=http://localhost:3000
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+   # Google OAuth (Optional)
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+   # AI
+   GEMINI_API_KEY=your_gemini_api_key
+
+   # Image Upload (Cloudinary)
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   # Initial Admin Setup (Optional defaults)
+   ADMIN_EMAIL=admin@in.com
+   ADMIN_PASSWORD=admin
+   ADMIN_NAME=Admin
+   ```
+
+4. **Run the application:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Initial Setup:**
+   - Visit `http://localhost:3000/setup` to create your first admin account if you haven't set one up via env vars or seeding.
+   - Visit `http://localhost:3000/admin` to access the dashboard.
 
 ---
-
 
 ## 🧪 Run & Test Commands
 
@@ -170,288 +216,121 @@ Visit `http://localhost:3000` (public) and `http://localhost:3000/admin` (dashbo
 npm run dev          # Development server
 npm run build        # Production build
 npm run start        # Serve production build
-
 npm run lint         # ESLint
-npm run test         # Jest/RTL
-npm run test:watch   # Jest watch mode
-
-npm run db:seed      # Seed sample admins/blogs
-npm run db:reset     # Reset Mongo data
 ```
 
 ---
 
 ## 📡 API Reference
 
-> Base path: `/api`
+> Base path: `/src/app/api`
 
-### Authentication & Session
+### Authentication
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/[...nextauth]` | GET/POST | NextAuth provider router |
-| `/auth/signin`, `/auth/register` | GET/POST | Sign-in UI, credential signup |
-| `/auth/logout` | POST | Destroy session |
-| `/auth/me` | GET | Current user profile |
+| `/api/auth/[...nextauth]` | GET/POST | NextAuth provider router |
+| `/api/setup` | POST | Create initial admin user |
 
-Session payload:
-
-```typescript
-interface Session {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: 'admin' | 'editor' | 'reader';
-    image?: string;
-  };
-  expires: string;
-}
-```
-
-### Blog Management
-| Endpoint | Method | Notes |
-|----------|--------|-------|
-| `/blog` | GET | Pagination via `page`, `pageSize` |
-| `/blog/[slug]` | GET | Populated blog detail |
-| `/blog` | POST | Admin/Editor create |
-| `/blog/[slug]` | PUT/PATCH | Update or partial update |
-| `/blog/[slug]` | DELETE | Admin-only delete |
+### Blog & Content
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/blog` | GET/POST | List blogs / Create blog |
+| `/api/blog/[slug]` | GET/PUT/DELETE | Get, Update, Delete blog |
+| `/api/upload-image` | POST | Upload image to Cloudinary |
 
 ### AI Services
 | Endpoint | Purpose | Payload |
 |----------|---------|---------|
-| `/ai/generate-blog` | Full draft generation | `{ title, keywords? }` |
-| `/ai/summarize` | Summary | `{ content, maxLength? }` |
-| `/ai/suggest-tags` | Tags/categories | `{ content, title? }` |
-| `/ai/alt-text` | Image accessibility | `{ imageUrl, context? }` |
-| `/ai/moderate` | Content moderation | `{ content }` |
-| `/ai/chat` | Conversational chatbot | `{ messages: [{role, content}] }` |
+| `/api/ai/generate-blog` | Full draft generation | `{ title, keywords? }` |
+| `/api/ai/summarize` | Summary | `{ content, maxLength? }` |
+| `/api/ai/suggest-tags` | Tags/categories | `{ content, title? }` |
+| `/api/ai/alt-text` | Image accessibility | `{ imageUrl }` |
+| `/api/ai/moderate` | Content moderation | `{ content }` |
+| `/api/ai/chat` | Conversational chatbot | `{ messages }` |
 
 ### User & Admin APIs
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/admin/users` | GET/POST/DELETE | List/update/delete users |
-| `/admin/users/[id]/toggle-status` | PATCH | Enable/disable |
-| `/admin/sub-admins` | CRUD delegated admins |
-| `/admin/settings` | GET/POST site + chatbot settings |
-| `/admin/analytics` | GET blog/user KPIs |
-| `/newsletter` | GET/POST subscribers |
-| `/comments` | GET/POST public comments |
-| `/comments/[id]` | PATCH/DELETE moderation |
-
-### Error & Rate Limiting
-
-```typescript
-{
-  success: false,
-  error: "INVALID_INPUT",
-  code?: "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "AI_SERVICE_ERROR",
-  details?: any
-}
-```
-
-- Public endpoints: **100 req/min**
-- Authenticated: **1000 req/min**
-- AI endpoints: **50 req/min**
-
-Response headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+| `/api/admin/users` | GET/POST/DELETE | Manage users |
+| `/api/admin/analytics` | GET | Dashboard KPIs |
+| `/api/newsletter` | GET/POST | Subscribe / List subscribers |
+| `/api/comments` | GET/POST | Public comments |
+| `/api/visitors` | POST | Track visitor sessions |
+| `/api/issues` | POST | Report issues |
 
 ---
 
 ## 👩‍💻 User & Admin Guide
 
 ### Getting Started
-1. Visit homepage → explore featured blogs.
-2. Register/sign in (Google OAuth or credentials).
-3. Admins land on `/admin/dashboard`; editors access creation tools; readers can comment + subscribe.
+1. **Setup:** Use `/setup` to create your admin account.
+2. **Login:** Access `/admin` and log in with your credentials.
+3. **Dashboard:** View analytics, manage content, and configure settings.
 
 ### Writing & Publishing
-1. `Dashboard → Blogs → Create`.
-2. Fill title (slug auto-generates, editable), summary, tags, categories, featured image.
-3. Use markdown editor or **Generate with AI** for auto draft.
-4. Save as draft or publish; AI moderation runs automatically and surfaces notes.
+1. Navigate to `Dashboard → Blogs → Create`.
+2. Enter a title and use **Generate with AI** to create a draft.
+3. Upload a featured image (handled by Cloudinary).
+4. Use the Markdown editor to refine content.
+5. Publish or save as draft.
 
-### Admin Dashboard Highlights
-- **Content:** filters, search, bulk publish/delete, quick edit, scheduled posts.
-- **Moderation:** AI verdicts + manual review for blogs/comments.
-- **Users:** assign roles, toggle access, view account timelines.
-- **Newsletter:** subscriber list, CSV export, manual outreach tools.
-- **Analytics:** blog views, user growth, traffic sources, conversion funnels.
-- **Settings:** site metadata, SEO defaults, chatbot toggle, welcome message, response tone.
+### Admin Features
+- **Analytics:** Track views, visitors, and engagement.
+- **User Management:** Manage roles (Admin, Editor, Reader) and access.
+- **Newsletter:** View and manage subscribers.
+- **Settings:** Configure site metadata and chatbot behavior.
 
 ### AI Chatbot
-- Floating action button on every page.
-- Use prompts like “Suggest topics for fintech blog”, “Review this introduction”.
-- Tips: be specific, include context, ask follow-ups, copy outputs for reuse.
-
-### Newsletter & Comments
-- Homepage form with validation + spam protection.
-- Admin exports subscribers; aligns with analytics conversions.
-- Comments API enforces moderation statuses: `pending`, `approved`, `rejected`, `flagged`.
-
-### Roles & Permissions
-| Role | Capabilities |
-|------|--------------|
-| Admin | Full access, settings, user management, deployments |
-| Editor | Create/edit blogs, limited analytics |
-| Reader | View/publish comments, subscribe |
+- Available on public pages.
+- Powered by Gemini to answer questions based on context.
 
 ---
 
 ## 🤖 AI Capabilities
 
-```mermaid
-sequenceDiagram
-    participant Editor
-    participant AIService
-    participant Gemini
-    participant Database
-
-    Editor->>AIService: Generate blog (title, keywords)
-    AIService->>Gemini: Prompt template
-    Gemini-->>AIService: Structured draft JSON
-    AIService->>Editor: Markdown + summary + tags
-    Editor->>AIService: Request moderation
-    AIService->>Gemini: Moderation prompt
-    Gemini-->>AIService: Verdict + reason
-    AIService->>Database: Persist blog + moderation notes
-```
-
-AI prompt templates (generate, moderate, tag, summarize, alt text, chatbot) live in the service layer and can be tuned for tone, compliance, or vertical-specific language.
+The platform leverages Google Gemini for:
+- **Content Generation:** Creates structured blog posts from titles/keywords.
+- **Moderation:** Automatically checks content for safety before publishing.
+- **Accessibility:** Generates alt text for uploaded images.
+- **Engagement:** Chatbot for visitor interaction.
 
 ---
 
-## 🚢 Deployment & Operations
+## 🚢 Deployment
 
 ### Vercel (Recommended)
-1. Fork/clone repo, push to GitHub.
-2. In Vercel: **New Project → Import repo**.
-3. Add env vars (see [Configuration](#-configuration)).
-4. Deploy, add custom domain, update `NEXTAUTH_URL` & `NEXT_PUBLIC_BASE_URL`.
+1. Push your code to a GitHub repository.
+2. Import the project into Vercel.
+3. Add all environment variables from `.env.local`.
+4. Deploy.
 
 ### Docker
-
-```dockerfile
-FROM node:18-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-FROM node:18-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-USER node
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-Compose example: app (port 3000) + nginx reverse proxy (TLS termination) + shared bridge network. Mount `nginx.conf`, `ssl/` for certs, restart `unless-stopped`.
-
-### Self-Hosted (Ubuntu + PM2)
-
-```bash
-sudo apt update && sudo apt upgrade -y
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-sudo npm install -g pm2
-git clone https://github.com/yourusername/gemini-ai-blog.git
-cd gemini-ai-blog && npm install && npm run build
-pm2 start npm --name "gemini-ai-blog" -- start
-pm2 save && pm2 startup
-```
-
-Optional systemd unit ensures auto-start on boot.
-
-### CI/CD
-- `deploy.yml`: on `main` push → test, lint, build, deploy via `amondnet/vercel-action`.
-- `deploy-staging.yml`: on `develop` push → deploy to Vercel staging target.
-
-### Production Checklist
-- [ ] Secrets stored securely, never committed.
-- [ ] HTTPS + HSTS enforced; DNS + SSL verified.
-- [ ] Mongo IP whitelist + least privilege DB users.
-- [ ] Rate limiting + CORS validated.
-- [ ] Health checks responding; readiness/liveness monitors.
-- [ ] Backups + disaster recovery plan tested.
+(Standard Next.js Dockerfile structure applies)
 
 ---
 
-## 🛡️ Security & Compliance
+## 🛡️ Security
 
-- **Authentication:** NextAuth (Google OAuth + credentials) with JWT sessions.
-- **Authorization:** Role-based permissions per resource; middleware guards admin routes.
-- **Transport:** Enforce HTTPS, secure cookies, CSRF tokens.
-- **Data:** Password hashing via bcrypt, sanitized inputs, Mongo indexes for efficient lookups.
-- **Rate Limiting:** Category-specific quotas (public/auth/AI).
-- **Logging:** Centralized error handling returns `success:false` payload with code + timestamp.
-
-Authorization matrix example:
-
-```typescript
-const permissions = {
-  admin: ['read', 'write', 'delete', 'manage_users'],
-  editor: ['read', 'write'],
-  reader: ['read'],
-};
-```
+- **Authentication:** Secure sessions via NextAuth.
+- **Authorization:** Role-based access control for Admin routes.
+- **Data Safety:** Inputs sanitized; passwords hashed.
+- **Rate Limiting:** Implemented via custom logic or external providers (e.g., Vercel).
 
 ---
 
-## 📊 Monitoring & Troubleshooting
+## 🤝 Contributing
 
-### Observability
-- **Vercel Analytics:** Add `<Analytics />` in `app/layout.tsx`.
-- **Sentry:** Configure via `lib/sentry.ts`, set `SENTRY_DSN`.
-- **Health Check:** `app/api/health/route.ts` checks DB connectivity and returns uptime/memory.
-- **Performance Hooks:** Optional Next.js instrumentation + bundle analyzer.
-
-### Common Issues
-| Symptom | Fix |
-|---------|-----|
-| Build failure | Check Node 18+, reinstall deps, review Vercel logs |
-| AI endpoints timeout | Validate `GEMINI_API_KEY`, inspect quotas, ensure outbound network |
-| Cannot publish blog | Confirm role permissions, required fields, moderation status |
-| Slow pages | Clear browser cache, check Mongo indexes, enable CDN caching |
-| Login problems | Verify credentials, role assignments, clear cookies, reset password |
-
-Collect reproduction steps + logs before escalating.
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes.
+4. Push to the branch.
+5. Open a Pull Request.
 
 ---
-
-## 🤝 Contributing & License
-
-1. Fork → create feature branch.
-2. Implement changes with tests.
-3. Run `npm run lint && npm run test && npm run build`.
-4. Submit PR describing changes + screenshots if UI.
-
-Development standards live in `CONTRIBUTING.md`.
-
-**License:** MIT (see `LICENSE`).
-
----
-
-## 🙌 Support & Links
-
-- Issues: GitHub issue tracker
-- Discussions: GitHub Discussions/Community
-- Deployment docs: Vercel, Docker, MongoDB official guides
-- AI feedback: In-app chatbot or issue template
 
 <div align="center">
 
-**Built with Royal and Google Gemini AI.**
-
-[Report Bug](https://github.com/yourusername/gemini-ai-blog/issues) • [Request Feature](https://github.com/yourusername/gemini-ai-blog/issues) • [Star Repo](https://github.com/yourusername/gemini-ai-blog)
+**Built with Next.js 15, Tailwind 4, and Google Gemini AI.**
 
 </div>
+
