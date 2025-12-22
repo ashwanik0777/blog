@@ -102,7 +102,7 @@ export default function BlogManagementPage() {
 
   async function handleTogglePublish(blog: Blog) {
     try {
-      const response = await fetch(`/api/blog/${blog.slug}`, {
+      const response = await fetch(`/api/blog/${blog._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,7 +130,7 @@ export default function BlogManagementPage() {
 
   async function handleSaveEdit(updatedBlog: Blog) {
     try {
-      const response = await fetch(`/api/blog/${updatedBlog.slug}`, {
+      const response = await fetch(`/api/blog/${updatedBlog._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedBlog),

@@ -91,7 +91,7 @@ export async function GET(req: Request) {
       Blog.find({ published: true })
         .sort({ views: -1 })
         .limit(10)
-        .select('title views slug createdAt'),
+        .select('title views slug createdAt _id'),
       startDate 
         ? User.aggregate([
             { $match: { createdAt: { $gte: startDate } } },
@@ -259,6 +259,7 @@ export async function GET(req: Request) {
         title: blog.title,
         views: blog.views || 0,
         slug: blog.slug,
+        _id: blog._id,
         createdAt: blog.createdAt
       })),
       userGrowth: userGrowth.map(item => ({

@@ -41,6 +41,7 @@ interface AnalyticsData {
     title: string;
     views: number;
     slug: string;
+    _id: string;
   }>;
   topPages: Array<{
     page: string;
@@ -466,7 +467,7 @@ export default function AnalyticsPage() {
           <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
             {analyticsData.topBlogs && analyticsData.topBlogs.length > 0 ? (
               analyticsData.topBlogs.map((blog, index) => (
-                <div key={blog.slug} className="flex items-center justify-between">
+                <div key={blog._id || blog.slug} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                       {index + 1}

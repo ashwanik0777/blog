@@ -32,7 +32,7 @@ export default function BlogCard({ blog }: { blog: any }) {
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <Link href={`/blog/${blog.slug}`} className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline line-clamp-2 mb-2 transition-colors">
+        <Link href={`/blog/${blog._id}`} className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline line-clamp-2 mb-2 transition-colors">
           {blog.title}
         </Link>
         <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-2 mb-3 flex-1 leading-relaxed">
