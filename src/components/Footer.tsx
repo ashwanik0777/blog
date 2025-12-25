@@ -2,46 +2,36 @@ import Link from "next/link";
 import { Mail, MessageSquare, FileText, HelpCircle, Github, Twitter, Linkedin, Facebook, Instagram, Youtube, Eye, Users } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
 import Settings from "@/models/Settings";
+import Visitor from "@/models/Visitor";
+import { unstable_cache } from "next/cache";
 
-async function getVisitorStats() {
-  try {
-    // Use stats=true for optimized response
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/visitors?range=lifetime&stats=true`, {
-      cache: 'no-store',
-      next: { revalidate: 60 } // Revalidate every 60 seconds
-    });
-    if (!res.ok) {
-      // Fallback to full API if stats endpoint fails
-      const fallbackRes = await fetch(`${baseUrl}/api/visitors?range=lifetime`, {
-        cache: 'no-store'
-      });
-      if (!fallbackRes.ok) return { uniqueVisitors: 0, totalPageViews: 0 };
-      const fallbackData = await fallbackRes.json();
+const getVisitorStats = unstable_cache(
+  async () => {
+    try {
+      await dbConnect();
+      const totalPageViews = await Visitor.countDocuments({});
+      const uniqueVisitorsList = await Visitor.distinct('ip');
       return {
-        uniqueVisitors: fallbackData.uniqueVisitors || 0,
-        totalPageViews: fallbackData.totalViews || fallbackData.totalPageViews || 0,
+        uniqueVisitors: uniqueVisitorsList.length,
+        totalPageViews,
       };
+    } catch (error) {
+      console.error('Footer stats error:', error);
+      return { uniqueVisitors: 0, totalPageViews: 0 };
     }
-    const data = await res.json();
-    return {
-      uniqueVisitors: data.uniqueVisitors || 0,
-      totalPageViews: data.totalPageViews || data.totalViews || 0,
-    };
-  } catch (error) {
-    console.error('Footer stats error:', error);
-    return { uniqueVisitors: 0, totalPageViews: 0 };
-  }
-}
+  },
+  ['visitor-stats'],
+  { revalidate: 60 }
+);
 
 async function getFooterSettings() {
   try {
     await dbConnect();
-    const settings = await Settings.findOne();
+    const settings = await Settings.findOne().lean();
     return {
-      socialMedia: settings?.socialMedia || {},
-      designBy: settings?.designBy || { name: '', portfolioUrl: '' },
-      developedBy: settings?.developedBy || { name: '', portfolioUrl: '' },
+      socialMedia: (settings as any)?.socialMedia || {},
+      designBy: (settings as any)?.designBy || { name: '', portfolioUrl: '' },
+      developedBy: (settings as any)?.developedBy || { name: '', portfolioUrl: '' },
     };
   } catch (error) {
     return {

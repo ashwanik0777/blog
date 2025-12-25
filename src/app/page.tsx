@@ -1,36 +1,20 @@
 import Link from "next/link";
 import BlogCard from "@/components/BlogCard";
 import Footer from "@/components/Footer";
-import { headers } from "next/headers";
 import { Sparkles, TrendingUp, ShieldCheck, Zap, BookOpen, Code, Rocket } from "lucide-react";
+import dbConnect from "@/lib/mongodb";
+import Blog from "@/models/Blog";
 
-export const dynamic = 'force-dynamic';
-
-async function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_BASE_URL) {
-    return process.env.NEXT_PUBLIC_BASE_URL;
-  }
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
-  return `${protocol}://${host}`;
-}
+export const revalidate = 60;
 
 async function getLatestBlogs() {
   try {
-    const baseUrl = await getBaseUrl();
-    const res = await fetch(`${baseUrl}/api/blog?pageSize=6`, { 
-      cache: 'no-store',
-      next: { revalidate: 0 }
-    });
-    if (!res.ok) {
-      console.error('Blog fetch failed:', res.status);
-      return [];
-    }
-    const data = await res.json();
-    const blogs = data.blogs || [];
-    const publishedBlogs = blogs.filter((blog: any) => blog.published === true);
-    return publishedBlogs.slice(0, 6);
+    await dbConnect();
+    const blogs = await Blog.find({ published: true })
+      .sort({ publishedAt: -1 })
+      .limit(6)
+      .lean();
+    return JSON.parse(JSON.stringify(blogs));
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return [];

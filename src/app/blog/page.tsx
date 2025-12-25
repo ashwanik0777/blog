@@ -1,32 +1,17 @@
-import { headers } from "next/headers";
 import BlogList from "@/components/BlogList";
 import Footer from "@/components/Footer";
+import dbConnect from "@/lib/mongodb";
+import Blog from "@/models/Blog";
 
-export const dynamic = 'force-dynamic';
-
-async function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_BASE_URL) {
-    return process.env.NEXT_PUBLIC_BASE_URL;
-  }
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
-  return `${protocol}://${host}`;
-}
+export const revalidate = 60;
 
 async function getBlogs() {
   try {
-    const baseUrl = await getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/blog`, {
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch blogs');
-    }
-    
-    const data = await response.json();
-    return data.blogs || []; 
+    await dbConnect();
+    const blogs = await Blog.find({ published: true })
+      .sort({ publishedAt: -1 })
+      .lean();
+    return JSON.parse(JSON.stringify(blogs));
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return [];
