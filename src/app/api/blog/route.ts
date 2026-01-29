@@ -125,13 +125,6 @@ export async function POST(req: Request) {
 
     await blog.save();
 
-    // Emit real-time notification
-    if (typeof global !== 'undefined' && (global as any)?.io) {
-      (global as any).io.emit('new-blog', `New blog published: ${blog.title}`);
-    } else if ((globalThis as any).res?.socket?.server?.io) {
-      (globalThis as any).res.socket.server.io.emit('new-blog', `New blog published: ${blog.title}`);
-    }
-
     return NextResponse.json(blog);
   } catch (error) {
     console.error('Blog creation error:', error);

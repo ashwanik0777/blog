@@ -1,6 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { io, Socket } from "socket.io-client";
+import { createContext, useContext, useState, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const NotificationContext = createContext({ addNotification: (msg: string, type?: string) => {} });
@@ -11,17 +10,6 @@ export function useNotification() {
 
 export default function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<{ msg: string; type?: string }[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  useEffect(() => {
-    const socket = io({ path: "/api/socket" });
-    setSocket(socket);
-    socket.on("new-blog", (msg: string) => {
-      addNotification(msg, "info");
-    });
-    return () => { socket.disconnect(); };
-    // eslint-disable-next-line
-  }, []);
 
   function addNotification(msg: string, type: string = "info") {
     setNotifications((prev) => [...prev, { msg, type }]);

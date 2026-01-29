@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Next.js](https://img.shields.io/badge/Next.js-15.4-black?style=for-the-badge&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-2f74c0?style=for-the-badge&logo=typescript)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-0fa14c?style=for-the-badge&logo=mongodb)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
@@ -73,7 +73,7 @@ graph TB
         D["App Router Pages"]
         E["Shared Components"]
         F["API Routes (App Router)"]
-        G["Socket.io Server (Pages Router)"]
+        G["Real-time Notifications (App Router)"]
     end
 
     subgraph "Core Services"
@@ -114,7 +114,7 @@ graph TB
 | Layer | Technologies |
 |-------|--------------|
 | Frontend | Next.js 15.4 (App Router), React 19, TypeScript, Tailwind CSS 4, Framer Motion |
-| Backend | Node.js, Next.js API Routes, NextAuth, Mongoose, Socket.io |
+| Backend | Node.js, Next.js API Routes, NextAuth, Mongoose |
 | Database | MongoDB Atlas |
 | Storage | Cloudinary (Image Uploads) |
 | AI | Google Gemini (generation, moderation, summarization, chatbot, alt text) |
@@ -138,7 +138,7 @@ graph TB
 │   ├── models/              # Mongoose Schemas: Blog, User, Comment, Settings, etc.
 │   └── middleware.ts        # Middleware configuration
 ├── pages/
-│   └── api/                 # Pages Router API (Socket.io)
+│   └── api/                 # API Routes
 ├── public/                  # Static assets
 ├── package.json             # npm scripts + deps
 └── README.md                # Project documentation
