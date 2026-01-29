@@ -6,6 +6,7 @@ import Comments from "@/components/Comments";
 import Footer from "@/components/Footer";
 import CopyButton from "@/components/CopyButton";
 import BlogViewTracker from "@/components/BlogViewTracker";
+import ThemeToggle from "@/components/ThemeToggle";
 import Link from "next/link";
 import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart, ChevronRight, Home } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
@@ -108,24 +109,27 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
       {/* Navbar */}
-      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
-        <Link href="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-          TechUpdatesZone Blog
+      <nav className="w-full py-4 px-6 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-sm sticky top-0 z-50 border-b border-gray-200/50 dark:border-gray-800/50">
+        <Link href="/" className="text-2xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          TechUpdatesZone
         </Link>
-        <div className="flex gap-6">
-          <Link href="/blog" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold transition-colors">Blogs</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/blog" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Blogs</Link>
+          <ThemeToggle />
         </div>
       </nav>
 
       <BlogViewTracker blogId={blog._id} />
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
-           <Link href="/" className="hover:text-blue-600 transition-colors flex items-center gap-1"><Home className="w-4 h-4" /> Home</Link>
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500 mb-10 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+           <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+             <Home className="w-4 h-4" /> Home
+           </Link>
            <ChevronRight className="w-4 h-4 flex-shrink-0" />
-           <Link href="/blog" className="hover:text-blue-600 transition-colors">Blog</Link>
+           <Link href="/blog" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Blogs</Link>
            <ChevronRight className="w-4 h-4 flex-shrink-0" />
-           <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]">{blog.title}</span>
+           <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]">{blog.title}</span>
         </div>
 
         <article>
@@ -133,12 +137,12 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
            <header className="max-w-4xl mx-auto text-center mb-10">
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                  {blog.categories?.map((cat: string) => (
-                    <span key={cat} className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                    <span key={cat} className="bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide border border-blue-200 dark:border-blue-800 flex items-center gap-1">
                        <FolderOpen className="w-3 h-3" /> {cat}
                     </span>
                  ))}
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight tracking-tight text-gray-900 dark:text-white">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight tracking-tight text-gray-900 dark:text-white">
                  {blog.title}
               </h1>
               {blog.summary && (
@@ -148,7 +152,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
               )}
               
               {/* Author & Meta */}
-              <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 dark:text-gray-400 text-sm border-y border-gray-200 dark:border-gray-800 py-4 w-fit mx-auto px-8 bg-white dark:bg-gray-900 rounded-full shadow-sm">
+              <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 dark:text-gray-400 text-sm border border-gray-200 dark:border-gray-800 rounded-full py-4 w-fit mx-auto px-8 bg-white dark:bg-gray-900 shadow-sm">
                  <div className="flex items-center gap-2">
                     {blog.author?.image ? (
                       <Image src={blog.author.image} alt={blog.author.name} width={32} height={32} className="rounded-full border border-gray-200 dark:border-gray-700" />
@@ -179,7 +183,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
            {/* Featured Image */}
            {blog.featuredImage && (
-              <div className="relative w-full aspect-[16/9] md:aspect-[21/9] mb-12 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-gray-900/5 dark:ring-white/10 group">
+              <div className="relative w-full aspect-[16/9] md:aspect-[21/9] mb-16 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800 group">
                  <Image 
                     src={blog.featuredImage} 
                     alt={blog.title} 
@@ -266,7 +270,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                     {blog.tags && blog.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {blog.tags.map((tag: string) => (
-                          <span key={tag} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-1.5">
+                          <span key={tag} className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-1.5 font-medium">
                             <Tag className="w-3.5 h-3.5" /> {tag}
                           </span>
                         ))}
@@ -294,9 +298,9 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
         {/* Related Posts */}
         {relatedBlogs.length > 0 && (
-          <div className="mt-24 pt-12 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+          <div className="mt-24 pt-16 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between mb-10">
+              <h3 className="text-3xl font-black flex items-center gap-2 text-gray-900 dark:text-white">
                 <BookOpen className="w-6 h-6 text-blue-600" /> Related Posts
               </h3>
               <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
@@ -308,7 +312,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                 <Link 
                   key={relatedBlog._id} 
                   href={`/blog/${relatedBlog._id}`}
-                  className="group block bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="group block bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300"
                 >
                   <div className="h-48 relative overflow-hidden">
                     {relatedBlog.featuredImage ? (

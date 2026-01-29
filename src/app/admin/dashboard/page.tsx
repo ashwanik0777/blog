@@ -156,32 +156,32 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          Dashboard Overview
+      <div className="mb-10">
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-3">
+          Dashboard
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Welcome back, {adminUser.name || 'Admin'}! Here's what's happening with your blog.
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Welcome back, <span className="font-semibold text-gray-900 dark:text-white">{adminUser.name || 'Admin'}</span>! Here's your blog overview.
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+          className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Blogs</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBlogs}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.publishedBlogs} published</p>
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Total Blogs</p>
+              <p className="text-4xl font-black text-gray-900 dark:text-white">{stats.totalBlogs}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{stats.publishedBlogs} published</p>
             </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
+              <FileText className="h-7 w-7 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </motion.div>
@@ -190,19 +190,19 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+          className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-6 hover:border-green-500 dark:hover:border-green-500 transition-all duration-300"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Views</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalViews.toLocaleString()}</p>
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Total Views</p>
+              <p className="text-4xl font-black text-gray-900 dark:text-white">{stats.totalViews.toLocaleString()}</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1 font-medium">
                 <TrendingUp className="h-3 w-3" />
                 All time
               </p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <Eye className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-xl border border-green-200 dark:border-green-800">
+              <Eye className="h-7 w-7 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </motion.div>
@@ -211,16 +211,16 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+          className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-6 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Users</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalUsers}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Registered users</p>
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Total Users</p>
+              <p className="text-4xl font-black text-gray-900 dark:text-white">{stats.totalUsers}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Registered users</p>
             </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800">
+              <Users className="h-7 w-7 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </motion.div>
@@ -229,111 +229,117 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow"
+          className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-6 hover:border-orange-500 dark:hover:border-orange-500 transition-all duration-300"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Quick Actions</p>
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Quick Access</p>
               <Link
                 href="/admin/dashboard/blogs"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-semibold text-sm"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-base"
               >
-                Manage Blogs
+                Manage Content
               </Link>
             </div>
-            <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-              <Settings className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-200 dark:border-orange-800">
+              <Settings className="h-7 w-7 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
         </motion.div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <div className="grid md:grid-cols-3 gap-6 mb-10">
         <Link
           href="/admin/dashboard/blogs"
-          className="bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-blue-400"
         >
-          <FileText className="h-5 w-5" />
-          <span>Manage Blogs</span>
-          <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <FileText className="h-6 w-6" />
+            <span>Manage Blogs</span>
+          </div>
+          <ArrowRight className="h-5 w-5" />
         </Link>
         <Link
           href="/admin/dashboard/analytics"
-          className="bg-green-600 text-white px-6 py-4 rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-green-400"
         >
-          <BarChart3 className="h-5 w-5" />
-          <span>View Analytics</span>
-          <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-6 w-6" />
+            <span>Analytics</span>
+          </div>
+          <ArrowRight className="h-5 w-5" />
         </Link>
         <Link
           href="/admin/dashboard/issues"
-          className="bg-red-600 text-white px-6 py-4 rounded-xl hover:bg-red-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-red-400"
         >
-          <MessageSquare className="h-5 w-5" />
-          <span>View Issues</span>
-          <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6" />
+            <span>Issues</span>
+          </div>
+          <ArrowRight className="h-5 w-5" />
         </Link>
       </div>
 
       {/* Recent Blogs */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-8">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Recent Blogs</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">Latest blog posts and their status</p>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Recent Blogs</h2>
+            <p className="text-gray-600 dark:text-gray-400">Latest posts and their status</p>
           </div>
           <button
             onClick={() => {
               setEditingBlog(null);
               setShowEditor(true);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-colors font-bold flex items-center gap-2 shadow-lg"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5" />
             New Blog
           </button>
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search blogs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-5 py-3 rounded-xl font-bold transition-all duration-300 ${
                 filterStatus === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700'
               }`}
             >
               All
             </button>
             <button
               onClick={() => setFilterStatus('published')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-5 py-3 rounded-xl font-bold transition-all duration-300 ${
                 filterStatus === 'published'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-green-600 text-white shadow-lg'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700'
               }`}
             >
               Published
             </button>
             <button
               onClick={() => setFilterStatus('draft')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-5 py-3 rounded-xl font-bold transition-all duration-300 ${
                 filterStatus === 'draft'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-yellow-600 text-white shadow-lg'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700'
               }`}
             >
               Drafts
@@ -346,15 +352,15 @@ export default function AdminDashboard() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : filteredBlogs.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-4">No blogs found</p>
+          <div className="text-center py-16">
+            <FileText className="h-20 w-20 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 text-lg mb-6 font-medium">No blogs found</p>
             <button
               onClick={() => {
                 setEditingBlog(null);
                 setShowEditor(true);
               }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl transition-colors font-bold shadow-lg"
             >
               Create Your First Blog
             </button>
@@ -366,22 +372,22 @@ export default function AdminDashboard() {
                 key={blog._id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                         {blog.title}
                       </h3>
                       {blog.published ? (
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" />
+                        <span className="px-3 py-1.5 bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-green-200 dark:border-green-800">
+                          <CheckCircle className="h-3.5 w-3.5" />
                           Published
                         </span>
                       ) : (
-                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                        <span className="px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-yellow-200 dark:border-yellow-800">
+                          <Clock className="h-3.5 w-3.5" />
                           Draft
                         </span>
                       )}
@@ -416,27 +422,27 @@ export default function AdminDashboard() {
                         setEditingBlog(blog);
                         setShowEditor(true);
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800"
                       title="Edit"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-5 w-5" />
                     </button>
                     <button
                       onClick={() => handleDelete(blog._id)}
-                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="p-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors border-2 border-transparent hover:border-red-200 dark:hover:border-red-800"
                       title="Delete"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
               </motion.div>
             ))}
             {filteredBlogs.length > 5 && (
-              <div className="text-center pt-4">
+              <div className="text-center pt-6">
                 <Link
                   href="/admin/dashboard/blogs"
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-lg"
                 >
                   View All Blogs ({filteredBlogs.length})
                 </Link>
@@ -448,8 +454,8 @@ export default function AdminDashboard() {
 
       {/* Blog Editor Modal */}
       {showEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-gray-200 dark:border-gray-800">
             <AdminBlogEditor
               blog={editingBlog}
               onClose={() => {
