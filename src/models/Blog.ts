@@ -64,7 +64,6 @@ const BlogSchema = new Schema<IBlog>({
   priority: { type: Number, default: 0 },
 }, { timestamps: true });
 
-BlogSchema.index({ slug: 1 }, { unique: true });
 BlogSchema.index({ published: 1, publishedAt: -1 });
 BlogSchema.index({ featured: 1, publishedAt: -1 });
 BlogSchema.index({ tags: 1 });

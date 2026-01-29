@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import ThemeToggle from "@/components/ThemeToggle";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -247,6 +248,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
+            <ThemeToggle />
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <select
@@ -623,74 +625,39 @@ export default function AnalyticsPage() {
             Browser Usage
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 bg-red-500 rounded"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Chrome</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-red-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.browserStats.chrome}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.browserStats.chrome}%
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Firefox</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-orange-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.browserStats.firefox}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.browserStats.firefox}%
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Safari</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.browserStats.safari}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.browserStats.safari}%
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Edge</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full" 
-                    style={{ width: `${analyticsData.browserStats.edge}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {analyticsData.browserStats.edge}%
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const browserStats = analyticsData?.browserStats || {};
+              const total = Object.values(browserStats).reduce((sum: number, val: any) => sum + (val || 0), 0) || 1;
+              const browsers = [
+                { key: 'chrome', label: 'Chrome', color: 'bg-red-500' },
+                { key: 'firefox', label: 'Firefox', color: 'bg-orange-500' },
+                { key: 'safari', label: 'Safari', color: 'bg-blue-500' },
+                { key: 'edge', label: 'Edge', color: 'bg-green-500' },
+              ];
+              return browsers.map((browser) => {
+                const count = browserStats[browser.key] || 0;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                return (
+                  <div key={browser.key} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-4 h-4 ${browser.color} rounded`}></div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{browser.label}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className={`${browser.color} h-2 rounded-full transition-all`}
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white w-20 text-right">
+                        {count.toLocaleString()} ({percentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </motion.div>
       </div>
