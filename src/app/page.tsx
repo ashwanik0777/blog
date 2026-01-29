@@ -11,6 +11,7 @@ async function getLatestBlogs() {
   try {
     await dbConnect();
     const blogs = await Blog.find({ published: true })
+      .select('title summary excerpt featuredImage categories tags featured readingTime createdAt')
       .sort({ publishedAt: -1 })
       .limit(6)
       .lean();

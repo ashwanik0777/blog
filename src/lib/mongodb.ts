@@ -6,6 +6,9 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
+mongoose.set('strictQuery', true);
+mongoose.set('autoIndex', process.env.NODE_ENV !== 'production');
+
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -23,9 +26,17 @@ async function dbConnect() {
     cached.promise = mongoose.connect(uri, {
       bufferCommands: false,
       dbName: 'Blog',
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
     }).then((mongoose) => {
       console.log('✅ Connected to MongoDB database: Blog');
       return mongoose;
+    }).catch((error) => {
+      cached.promise = null;
+      throw error;
     });
   }
   cached.conn = await cached.promise;

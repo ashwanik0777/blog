@@ -3,13 +3,23 @@ import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import { getToken } from 'next-auth/jwt';
 
+function estimateReadingTime(content?: string) {
+  if (!content) return 1;
+  const words = content.split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   const { id } = await params;
   try {
-    const blog = await Blog.findById(id).populate('author', 'name email image');
+    const blog = await Blog.findById(id)
+      .populate('author', 'name email image')
+      .lean();
     if (!blog) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json(blog);
+    const response = NextResponse.json(blog);
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return response;
   } catch (error) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }
@@ -36,7 +46,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         categories: body.categories,
         featuredImage: body.featuredImage,
         published: body.published,
-        status: body.published ? 'approved' : 'draft'
+        status: body.published ? 'approved' : 'draft',
+        readingTime: body.readingTime || estimateReadingTime(body.content),
       },
       { new: true }
     );
@@ -78,9 +89,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           $inc: { views: 1, [`viewsByDay.${today}`]: 1 },
         },
         { new: true }
-      );
+      ).select('views viewsByDay');
       if (!blog) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-      return NextResponse.json({ views: blog.views, viewsByDay: blog.viewsByDay });
+      const response = NextResponse.json({ views: blog.views, viewsByDay: blog.viewsByDay });
+      response.headers.set('Cache-Control', 'no-store');
+      return response;
     }
     // If not a view increment, allow admin to update status/notes
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });

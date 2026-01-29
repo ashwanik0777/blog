@@ -9,6 +9,7 @@ async function getBlogs() {
   try {
     await dbConnect();
     const blogs = await Blog.find({ published: true })
+      .select('title summary excerpt featuredImage categories tags featured readingTime createdAt')
       .sort({ publishedAt: -1 })
       .lean();
     return JSON.parse(JSON.stringify(blogs));

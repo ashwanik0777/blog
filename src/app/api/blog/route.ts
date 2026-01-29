@@ -5,42 +5,62 @@ import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 
+function estimateReadingTime(content?: string) {
+  if (!content) return 1;
+  const words = content.split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
 export async function GET(req: Request) {
   try {
     await dbConnect();
 
     const url = new URL(req.url!, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
     const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
+    const pageSize = Math.min(parseInt(url.searchParams.get('pageSize') || '10', 10), 50);
     const isAdmin = url.searchParams.get('admin') === 'true';
     const skip = (page - 1) * pageSize;
 
-  if (isAdmin) {
-    // Check admin authentication using NextAuth
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+    if (isAdmin) {
+      // Check admin authentication using NextAuth
+      const session = await getServerSession(authOptions);
+      
+      if (!session || !session.user || (session.user as any).role !== 'admin') {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+      }
+
+      const selectFields = 'title summary excerpt featuredImage categories tags featured readingTime createdAt author published publishedAt status';
+      const [total, blogs] = await Promise.all([
+        Blog.countDocuments(),
+        Blog.find()
+          .select(selectFields)
+          .populate('author', 'name email image')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(pageSize)
+          .lean(),
+      ]);
+
+      const response = NextResponse.json({ blogs, total });
+      response.headers.set('Cache-Control', 'no-store');
+      return response;
     }
 
-    const total = await Blog.countDocuments();
-    const blogs = await Blog.find()
-      .populate('author', 'name email image')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(pageSize);
+    const selectFields = 'title summary excerpt featuredImage categories tags featured readingTime createdAt author publishedAt';
+    const [total, blogs] = await Promise.all([
+      Blog.countDocuments({ published: true }),
+      Blog.find({ published: true })
+        .select(selectFields)
+        .populate('author', 'name image')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .lean(),
+    ]);
 
-    return NextResponse.json({ blogs, total });
-  }
-
-  const total = await Blog.countDocuments({ published: true });
-  const blogs = await Blog.find({ published: true })
-    .populate('author', 'name email image')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(pageSize);
-
-  return NextResponse.json({ blogs, total });
+    const response = NextResponse.json({ blogs, total });
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return response;
   } catch (error) {
     console.error('Blog API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -60,7 +80,7 @@ export async function POST(req: Request) {
 
     const data = await req.json();
 
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ email: session.user.email }).select('_id');
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -72,7 +92,8 @@ export async function POST(req: Request) {
 
     if (data.content) {
       try {
-        const res = await fetch(process.env.NEXT_PUBLIC_BASE_URL + '/api/ai/moderate', {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const res = await fetch(baseUrl + '/api/ai/moderate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content: data.content }),
@@ -99,6 +120,7 @@ export async function POST(req: Request) {
       flaggedReason,
       published: data.published || false,
       publishedAt: data.published ? new Date() : undefined,
+      readingTime: data.readingTime || estimateReadingTime(data.content),
     });
 
     await blog.save();

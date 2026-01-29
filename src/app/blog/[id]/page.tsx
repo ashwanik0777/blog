@@ -5,6 +5,7 @@ import Image from "next/image";
 import Comments from "@/components/Comments";
 import Footer from "@/components/Footer";
 import CopyButton from "@/components/CopyButton";
+import BlogViewTracker from "@/components/BlogViewTracker";
 import Link from "next/link";
 import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart, ChevronRight, Home } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
@@ -22,13 +23,15 @@ async function getBlog(id: string) {
 async function getRelatedBlogs(categories: string[], currentId: string) {
   try {
     await dbConnect();
-    const blogs = await Blog.find({ 
-      _id: { $ne: currentId }, 
-      published: true 
-    })
-    .sort({ publishedAt: -1 })
-    .limit(3)
-    .lean();
+    const query = categories?.length
+      ? { _id: { $ne: currentId }, published: true, categories: { $in: categories } }
+      : { _id: { $ne: currentId }, published: true };
+
+    const blogs = await Blog.find(query)
+      .select('title summary excerpt featuredImage categories createdAt readingTime')
+      .sort({ publishedAt: -1 })
+      .limit(3)
+      .lean();
     return JSON.parse(JSON.stringify(blogs));
   } catch {
     return [];
@@ -99,13 +102,6 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const url = `${baseUrl}/blog/${blog._id}`;
-  
-  // Increment view count
-  try {
-    await fetch(`${baseUrl}/api/blog/${blog._id}?view=1`, { method: 'PATCH', cache: 'no-store' });
-  } catch (e) {
-    console.error('Failed to increment view count', e);
-  }
 
   const relatedBlogs = await getRelatedBlogs(blog.categories || [], blog._id);
 
@@ -121,6 +117,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
         </div>
       </nav>
 
+      <BlogViewTracker blogId={blog._id} />
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
@@ -168,12 +165,12 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                     <span>{new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                  </div>
                  <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600 hidden sm:block" />
-                 <div className="flex items-center gap-1.5 hidden sm:flex">
+                 <div className="hidden sm:flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
                     <span>{blog.readingTime || getReadingTime(blog.content)} min read</span>
                  </div>
                  <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600 hidden sm:block" />
-                 <div className="flex items-center gap-1.5 hidden sm:flex">
+                 <div className="hidden sm:flex items-center gap-1.5">
                     <Eye className="w-4 h-4" />
                     <span>{blog.views || 0} views</span>
                  </div>
@@ -338,7 +335,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                     </p>
                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
                        <span>{new Date(relatedBlog.createdAt).toLocaleDateString()}</span>
-                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {getReadingTime(relatedBlog.content)} min</span>
+                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {relatedBlog.readingTime || 1} min</span>
                     </div>
                   </div>
                 </Link>
