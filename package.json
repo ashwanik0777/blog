@@ -22,6 +22,7 @@
     "giscus": "^1.6.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.536.0",
+    "mongodb": "^5.9.2",
     "mongoose": "^8.16.4",
     "next": "^16.1.6",
     "next-auth": "^4.24.11",
