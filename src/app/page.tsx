@@ -119,10 +119,10 @@ export default async function Home() {
           <div className="mb-6 flex flex-wrap gap-2">
             {(topicHighlights.length ? topicHighlights : ["AI", "Next.js", "TypeScript", "Cloud"]).map((topic) => (
               <span
-                key={topic}
+                key={topic as string}
                 className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
               >
-                #{topic}
+                #{topic as string}
               </span>
             ))}
           </div>
