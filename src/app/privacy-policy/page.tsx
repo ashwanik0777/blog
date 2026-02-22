@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <main className="max-w-6xl mx-auto px-4 py-12">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 md:p-12">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">

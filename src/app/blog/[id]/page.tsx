@@ -120,7 +120,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
       </nav>
 
       <BlogViewTracker blogId={blog._id} />
-      <main className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
+      <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500 mb-10 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
@@ -134,7 +134,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
         <article>
            {/* Header Section */}
-           <header className="max-w-4xl mx-auto text-center mb-10">
+           <header className="max-w-7xl mx-auto text-center mb-10">
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                  {blog.categories?.map((cat: string) => (
                     <span key={cat} className="bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide border border-blue-200 dark:border-blue-800 flex items-center gap-1">
@@ -142,11 +142,11 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                     </span>
                  ))}
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight tracking-tight text-gray-900 dark:text-white">
+              <h1 className="text-4xl md:text-6xl lg:text-6xl font-black mb-6 leading-tight tracking-tight text-gray-900 dark:text-white">
                  {blog.title}
               </h1>
               {blog.summary && (
-                 <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+                 <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-5xl mx-auto leading-relaxed">
                     {blog.summary}
                  </p>
               )}
@@ -195,7 +195,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
            )}
 
            {/* Content Column - Constrained Width */}
-           <div className="max-w-3xl mx-auto">
+           <div className="max-w-5xl mx-auto">
               <div className="prose prose-lg dark:prose-invert max-w-none">
                  <ReactMarkdown
                     components={{
@@ -318,9 +318,16 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                     {relatedBlog.featuredImage ? (
                       <Image src={relatedBlog.featuredImage} alt={relatedBlog.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                        <TrendingUp className="w-8 h-8 text-gray-400" />
-                      </div>
+                      <>
+                        <Image
+                          src="/blog-fallback-tech.svg"
+                          alt="Tech blog illustration"
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      </>
                     )}
                     <div className="absolute top-3 left-3">
                        {relatedBlog.categories?.[0] && (

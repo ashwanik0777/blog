@@ -27,12 +27,19 @@ export default function BlogCard({ blog }: { blog: any }) {
             priority={blog.featured}
           />
         ) : (
-          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-gray-400 text-4xl">📝</span>
-          </div>
+          <>
+            <Image
+              src="/blog-fallback-tech.svg"
+              alt="Tech blog illustration"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </>
         )}
         {blog.featured && (
-          <div className="absolute top-3 left-3 bg-yellow-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border-2 border-yellow-400">
+          <div className="absolute top-3 left-3 rounded-xl border border-blue-200/60 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-blue-900/30">
             ⭐ Featured
           </div>
         )}

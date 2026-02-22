@@ -78,9 +78,7 @@ export default async function Home() {
             <br />
             <span className="text-blue-600 dark:text-blue-500">TechUpdatesZone</span>
           </h1>
-          <p className="mb-8 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-400 md:text-xl">
-            AI-powered blog jahan aapko milte hain practical tutorials, latest trends, aur production-ready insights — clean, fast aur professional experience ke saath.
-          </p>
+          
           <div className="mb-10 flex flex-wrap gap-4">
             <Link
               href="/blog"
@@ -155,9 +153,7 @@ export default async function Home() {
             <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
               Why developers choose us
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Practical content + better reading experience + regular high-quality updates
-            </p>
+            
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -265,9 +261,7 @@ export default async function Home() {
             <h2 className="mb-4 text-4xl font-black text-gray-900 dark:text-white md:text-5xl">
               Join the developer newsletter
             </h2>
-            <p className="mx-auto mb-2 max-w-2xl text-lg text-gray-600 dark:text-gray-300 md:text-xl">
-              Real-world tech updates, coding tips, aur practical guides — direct inbox mein.
-            </p>
+            
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No spam. Unsubscribe anytime.</p>
 
             <div className="mt-6">
