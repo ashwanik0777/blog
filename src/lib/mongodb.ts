@@ -28,9 +28,9 @@ async function dbConnect() {
       dbName: 'Blog',
       maxPoolSize: 10,
       minPoolSize: 1,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 15000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 15000,
     }).then((mongoose) => {
       console.log('✅ Connected to MongoDB database: Blog');
       return mongoose;

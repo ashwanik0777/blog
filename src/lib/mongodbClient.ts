@@ -4,9 +4,9 @@ const uri = process.env.MONGODB_URI!;
 const options = {
   maxPoolSize: 10,
   minPoolSize: 1,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 15000,
   socketTimeoutMS: 45000,
-  connectTimeoutMS: 10000,
+  connectTimeoutMS: 15000,
   retryWrites: true,
 };
 
@@ -27,5 +27,9 @@ if (process.env.NODE_ENV === 'development') {
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
+
+clientPromise.catch((error: unknown) => {
+  console.error('MongoDB client connection error:', error);
+});
 
 export default clientPromise; 
