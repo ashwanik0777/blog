@@ -11,14 +11,48 @@ import Link from "next/link";
 import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart, ChevronRight, Home } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
 import Blog from "@/models/Blog";
+import { headers } from "next/headers";
+import mongoose from "mongoose";
 
 export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
-async function getBlog(id: string) {
-  await dbConnect();
-  const blog = await Blog.findById(id).populate('author', 'name email image').lean();
-  if (!blog) throw new Error("Failed to fetch blog");
-  return JSON.parse(JSON.stringify(blog));
+async function getRequestOrigin() {
+  const headerStore = await headers();
+  const host = headerStore.get('x-forwarded-host') || headerStore.get('host');
+  const protocol = headerStore.get('x-forwarded-proto') || 'https';
+
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
+async function getBlog(id: string, origin?: string) {
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+  try {
+    await dbConnect();
+    const blog = await Blog.findById(id).populate('author', 'name email image').lean();
+    if (blog) return JSON.parse(JSON.stringify(blog));
+  } catch (error) {
+    console.error('Direct DB blog fetch failed, trying API fallback:', error);
+  }
+
+  if (!origin) return null;
+
+  try {
+    const response = await fetch(`${origin}/api/blog/${id}`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('API fallback blog fetch failed:', error);
+    return null;
+  }
 }
 
 async function getRelatedBlogs(categories: string[], currentId: string) {
@@ -45,8 +79,11 @@ export async function generateMetadata({ params }: BlogPageParams): Promise<Meta
   const resolvedParams = await params;
   const { id } = resolvedParams;
   try {
-    const blog = await getBlog(id);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const origin = await getRequestOrigin();
+    const blog = await getBlog(id, origin);
+    if (!blog) return { title: "Blog Not Found" };
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || origin;
     const url = `${baseUrl}/blog/${blog._id}`;
     return {
       title: blog.title,
@@ -84,9 +121,11 @@ function getReadingTime(content: string) {
 
 export default async function BlogDetailPage({ params }: BlogPageParams) {
   const { id } = await params;
+  const origin = await getRequestOrigin();
   let blog;
   try {
-    blog = await getBlog(id);
+    blog = await getBlog(id, origin);
+    if (!blog) throw new Error('Blog not found');
   } catch (e) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -101,7 +140,7 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
     );
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || origin;
   const url = `${baseUrl}/blog/${blog._id}`;
 
   const relatedBlogs = await getRelatedBlogs(blog.categories || [], blog._id);
