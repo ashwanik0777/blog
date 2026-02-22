@@ -152,8 +152,9 @@ export default function DashboardLayout({
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      await fetch('/api/auth/logout', { method: 'POST' });
       localStorage.clear();
       router.push("/admin");
     } catch (error) {

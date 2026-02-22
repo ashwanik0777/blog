@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Comment from '@/models/Comment';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -73,11 +74,9 @@ export async function GET(req: Request) {
   const isAdmin = url.searchParams.get('admin') === 'true';
 
   if (isAdmin) {
-    // Admin request - get all comments
-    const { getToken } = await import('next-auth/jwt');
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token || token.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) {
+      return errorResponse;
     }
     const comments = await Comment.find()
       .populate('blog', 'title')

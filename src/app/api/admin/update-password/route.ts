@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any)?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { user, errorResponse } = requireAdmin(req);
+    if (errorResponse || !user) {
+      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     await dbConnect();
@@ -23,21 +22,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'New password must be at least 6 characters' }, { status: 400 });
     }
 
-    const user = await User.findById((session.user as any).id);
-    if (!user || !user.password) {
+    const adminUser = await User.findById(user.id);
+    if (!adminUser || !adminUser.password) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isValid = await bcrypt.compare(currentPassword, adminUser.password);
     if (!isValid) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
     }
 
     // Update password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
-    user.password = hashedPassword;
-    await user.save();
+    adminUser.password = hashedPassword;
+    await adminUser.save();
 
     return NextResponse.json({ 
       success: true, 

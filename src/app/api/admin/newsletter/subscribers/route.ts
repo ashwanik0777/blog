@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { getToken } from 'next-auth/jwt';
 import mongoose, { Schema, models, model } from 'mongoose';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // Newsletter Subscriber Schema
 const NewsletterSubscriberSchema = new Schema({
@@ -18,16 +18,10 @@ const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSub
 
 export async function GET(req: Request) {
   await dbConnect();
-  
-  // Check admin authentication
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  
-  if (!token) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-  }
-  
-  if (token.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
 
   try {
@@ -43,16 +37,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   await dbConnect();
-  
-  // Check admin authentication
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  
-  if (!token) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-  }
-  
-  if (token.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
 
   try {

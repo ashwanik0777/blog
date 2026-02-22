@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
 import mongoose, { Schema, models, model } from 'mongoose';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // Newsletter Subscriber Schema
 const NewsletterSubscriberSchema = new Schema({
@@ -19,22 +18,10 @@ const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSub
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   await dbConnect();
-  
-  // Check admin authentication
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-  }
-  
-  const token = authHeader.substring(7);
-  
-  try {
-    const decoded = verify(token, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-    }
-  } catch (error) {
-    return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
+
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
 
   try {
@@ -52,22 +39,10 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   await dbConnect();
-  
-  // Check admin authentication
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-  }
-  
-  const token = authHeader.substring(7);
-  
-  try {
-    const decoded = verify(token, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-    }
-  } catch (error) {
-    return NextResponse.json({ error: 'Invalid admin session' }, { status: 401 });
+
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
 
   try {

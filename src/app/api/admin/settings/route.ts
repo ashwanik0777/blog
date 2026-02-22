@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { requireAdmin } from '@/lib/adminAuth';
 import dbConnect from '@/lib/mongodb';
 import Settings from '@/models/Settings';
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) {
+      return errorResponse;
     }
 
     await dbConnect();
@@ -44,10 +42,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) {
+      return errorResponse;
     }
 
     await dbConnect();

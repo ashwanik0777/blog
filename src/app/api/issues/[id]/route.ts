@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Issue from '@/models/Issue';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any)?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { user, errorResponse } = requireAdmin(req);
+    if (errorResponse || !user) {
+      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     await dbConnect();
@@ -20,7 +19,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
     if (status === 'resolved' || status === 'closed') {
       updateData.resolvedAt = new Date();
-      updateData.resolvedBy = (session.user as any).id;
+      updateData.resolvedBy = user.id;
     }
 
     const issue = await Issue.findByIdAndUpdate(
@@ -44,9 +43,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any)?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) {
+      return errorResponse;
     }
 
     await dbConnect();

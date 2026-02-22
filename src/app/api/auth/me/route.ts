@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getAdminSessionFromRequest } from '@/lib/adminAuth';
 
 export async function GET(req: Request) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token) {
+    const user = getAdminSessionFromRequest(req);
+
+    if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     return NextResponse.json({
-      id: token.sub,
-      name: token.name,
-      email: token.email,
-      role: token.role,
-      image: token.picture
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      image: null,
     });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

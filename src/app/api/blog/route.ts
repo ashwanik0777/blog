@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import User from '@/models/User';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { requireAdmin } from '@/lib/adminAuth';
 
 function estimateReadingTime(content?: string) {
   if (!content) return 1;
@@ -22,10 +21,9 @@ export async function GET(req: Request) {
     const skip = (page - 1) * pageSize;
 
     if (isAdmin) {
-      // Check admin authentication using NextAuth
-      const session = await getServerSession(authOptions);
-      
-      if (!session || !session.user || (session.user as any).role !== 'admin') {
+      const { errorResponse } = requireAdmin(req);
+
+      if (errorResponse) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
       }
 
@@ -71,18 +69,16 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
 
-    // Check admin authentication using NextAuth
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+    const { user, errorResponse } = requireAdmin(req);
+    if (errorResponse || !user) {
+      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 401 });
     }
 
     const data = await req.json();
 
-    const user = await User.findOne({ email: session.user.email }).select('_id');
+    const author = await User.findOne({ email: user.email }).select('_id');
 
-    if (!user) {
+    if (!author) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -115,7 +111,7 @@ export async function POST(req: Request) {
 
     const blog = new Blog({
       ...data,
-      author: user._id,
+      author: author._id,
       status,
       flaggedReason,
       published: data.published || false,

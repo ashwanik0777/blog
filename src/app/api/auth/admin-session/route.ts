@@ -1,28 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { getAdminSessionFromRequest } from '@/lib/adminAuth';
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = getAdminSessionFromRequest(req);
 
-    if (!session?.user) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'No session' }, { status: 401 });
-    }
-
-    const userRole = (session.user as any).role;
-
-    if (userRole !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     return NextResponse.json({
       user: {
-        id: session.user.id || session.user.email,
-        email: session.user.email,
-        role: userRole,
-        name: session.user.name,
-        image: session.user.image
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        image: null,
       }
     });
   } catch (error) {

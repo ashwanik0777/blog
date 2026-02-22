@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
   const { title, keywords } = await req.json();
   if (!title && !keywords) {

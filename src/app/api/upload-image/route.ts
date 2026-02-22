@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 import cloudinary from 'cloudinary';
+import { requireAdmin } from '@/lib/adminAuth';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,9 +11,9 @@ cloudinary.v2.config({
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
   const formData = await req.formData();
   const file = formData.get('file');

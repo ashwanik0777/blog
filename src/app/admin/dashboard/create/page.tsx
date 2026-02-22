@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function CreateBlogPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -24,13 +24,24 @@ export default function CreateBlogPage() {
 
   // Check if user is admin
   useEffect(() => {
-    if (status === "loading") return;
-    
-    if (!session || session.user?.role !== 'admin') {
-      router.push('/admin');
-      return;
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/admin-session');
+        if (response.ok) {
+          const data = await response.json();
+          setAdminUser(data.user);
+        } else {
+          router.push('/admin');
+        }
+      } catch {
+        router.push('/admin');
+      } finally {
+        setCheckingAuth(false);
+      }
     }
-  }, [session, status, router]);
+
+    checkAuth();
+  }, [router]);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -121,7 +132,7 @@ export default function CreateBlogPage() {
     }
   }
 
-  if (status === "loading") {
+  if (checkingAuth) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -129,7 +140,7 @@ export default function CreateBlogPage() {
     );
   }
 
-  if (!session || session.user?.role !== 'admin') {
+  if (!adminUser) {
     return null;
   }
 

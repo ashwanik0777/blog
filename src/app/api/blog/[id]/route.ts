@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
-import { getToken } from 'next-auth/jwt';
+import { requireAdmin } from '@/lib/adminAuth';
 
 function estimateReadingTime(content?: string) {
   if (!content) return 1;
@@ -27,9 +27,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
   const { id } = await params;
   const body = await req.json();
@@ -61,9 +61,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { errorResponse } = requireAdmin(req);
+  if (errorResponse) {
+    return errorResponse;
   }
   const { id } = await params;
   try {
@@ -96,9 +96,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return response;
     }
     // If not a view increment, allow admin to update status/notes
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token || token.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) {
+      return errorResponse;
     }
     const updates = await req.json();
     const blog = await Blog.findByIdAndUpdate(id, updates, { new: true });

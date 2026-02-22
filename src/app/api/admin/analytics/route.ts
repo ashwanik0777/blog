@@ -5,18 +5,16 @@ import User from '@/models/User';
 import Visitor from '@/models/Visitor';
 import Issue from '@/models/Issue';
 import Comment from '@/models/Comment';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { requireAdmin } from '@/lib/adminAuth';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    // Check admin authentication using NextAuth
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
+    const { errorResponse } = requireAdmin(req);
+
+    if (errorResponse) {
       // Return empty data instead of error to prevent frontend crashes
       return NextResponse.json({ 
         totalBlogs: 0,
