@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { extractJson, geminiGenerateText } from '@/lib/gemini';
 
 export async function POST(req: Request) {
   const { errorResponse } = requireAdmin(req);
@@ -11,30 +12,49 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing title or keywords' }, { status: 400 });
   }
 
-  // Get API key from environment or request
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.' }, { status: 500 });
-  }
+  const prompt = `You are a professional technical blog writer.
+Write original, non-plagiarized content. Do not copy from sources. Do not use quotes longer than 20 words.
+Avoid brand names unless they are strictly necessary for clarity.
+If you use external facts, include citations in a References section and in a references array.
+Return ONLY valid JSON (no markdown fences, no extra text).
 
-  // Call Gemini API
-  const prompt = `Generate a detailed, SEO-optimized blog post.\nTitle: ${title}\nKeywords: ${keywords || ''}\nReturn JSON with fields: content (markdown), summary, tags (array), categories (array).`;
-  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + apiKey, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-  });
-  if (!geminiRes.ok) {
-    return NextResponse.json({ error: 'Gemini API error' }, { status: 500 });
-  }
-  const geminiData = await geminiRes.json();
-  // Parse Gemini response (assume markdown in text)
-  let result = { content: '', summary: '', tags: [], categories: [] };
+Input:
+Title: ${title}
+Keywords: ${keywords || ''}
+
+Output JSON schema:
+{
+  "content": "markdown string with headings, lists, and a ## References section (if any)",
+  "summary": "2-3 sentence summary",
+  "tags": ["tag1", "tag2"],
+  "categories": ["category1", "category2"],
+  "keywords": ["keyword1", "keyword2"],
+  "seoTitle": "50-60 chars",
+  "seoDescription": "150-160 chars",
+  "readingTime": 1,
+  "references": [{"title": "Source title", "url": "https://example.com"}]
+}
+`;
+
   try {
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    result = JSON.parse(text);
-  } catch {
-    result.content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = await geminiGenerateText(prompt);
+    const result = extractJson(
+      text,
+      {
+        content: text || '',
+        summary: '',
+        tags: [],
+        categories: [],
+        keywords: [],
+        seoTitle: '',
+        seoDescription: '',
+        readingTime: 1,
+        references: [],
+      }
+    );
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Gemini API error' }, { status: 500 });
   }
-  return NextResponse.json(result);
 } 

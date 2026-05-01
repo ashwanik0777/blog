@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { extractJson, geminiGenerateText } from '@/lib/gemini';
 
 export async function POST(req: Request) {
   const { errorResponse } = requireAdmin(req);
@@ -10,23 +11,12 @@ export async function POST(req: Request) {
   if (!content) {
     return NextResponse.json({ error: 'Missing content' }, { status: 400 });
   }
-  // Call Gemini API
-  const prompt = `Suggest 5 relevant tags and 2-3 categories for the following blog content. Return JSON: { tags: string[], categories: string[] }\nContent:\n${content}`;
-  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-  });
-  if (!geminiRes.ok) {
-    return NextResponse.json({ error: 'Gemini API error' }, { status: 500 });
-  }
-  const geminiData = await geminiRes.json();
-  let result = { tags: [], categories: [] };
+  const prompt = `Suggest 5-8 relevant tags and 2-3 categories for the following blog content.\nReturn ONLY valid JSON: { \"tags\": string[], \"categories\": string[] }.\nContent:\n${content}`;
   try {
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    result = JSON.parse(text);
-  } catch {
-    // fallback: try to extract tags/categories from plain text
+    const text = await geminiGenerateText(prompt);
+    const result = extractJson(text, { tags: [], categories: [] });
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Gemini API error' }, { status: 500 });
   }
-  return NextResponse.json(result);
 } 

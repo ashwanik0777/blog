@@ -249,7 +249,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-6 mb-10">
+      <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
         <Link
           href="/admin/dashboard/blogs"
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-blue-400"
@@ -277,6 +277,26 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3">
             <MessageSquare className="h-6 w-6" />
             <span>Issues</span>
+          </div>
+          <ArrowRight className="h-5 w-5" />
+        </Link>
+        <Link
+          href="/admin/dashboard/ai-content"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-purple-400"
+        >
+          <div className="flex items-center gap-3">
+            <Bot className="h-6 w-6" />
+            <span>AI Studio</span>
+          </div>
+          <ArrowRight className="h-5 w-5" />
+        </Link>
+        <Link
+          href="/admin/dashboard/create"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-5 rounded-2xl transition-all duration-300 font-bold flex items-center justify-between shadow-lg hover:shadow-xl border-2 border-transparent hover:border-amber-400"
+        >
+          <div className="flex items-center gap-3">
+            <Plus className="h-6 w-6" />
+            <span>New Blog</span>
           </div>
           <ArrowRight className="h-5 w-5" />
         </Link>

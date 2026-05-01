@@ -87,12 +87,14 @@ export async function generateMetadata({ params }: BlogPageParams): Promise<Meta
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || origin;
     const url = `${baseUrl}/blog/${blog._id}`;
+    const metaTitle = blog.metaTitle || blog.title;
+    const metaDescription = blog.metaDescription || blog.summary || blog.excerpt || blog.content.substring(0, 160);
     return {
-      title: blog.title,
-      description: blog.summary || blog.excerpt || blog.content.substring(0, 160),
+      title: metaTitle,
+      description: metaDescription,
       openGraph: {
-        title: blog.title,
-        description: blog.summary || blog.excerpt || blog.content.substring(0, 160),
+        title: metaTitle,
+        description: metaDescription,
         url,
         type: "article",
         images: blog.featuredImage ? [{ url: blog.featuredImage }] : [],
@@ -102,8 +104,8 @@ export async function generateMetadata({ params }: BlogPageParams): Promise<Meta
       },
       twitter: {
         card: "summary_large_image",
-        title: blog.title,
-        description: blog.summary || blog.excerpt || blog.content.substring(0, 160),
+        title: metaTitle,
+        description: metaDescription,
         images: blog.featuredImage ? [blog.featuredImage] : [],
       },
       alternates: {

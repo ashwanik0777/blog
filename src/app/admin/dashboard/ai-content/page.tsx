@@ -35,6 +35,10 @@ export default function AIContentPage() {
   const [generatedSummary, setGeneratedSummary] = useState("");
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
   const [generatedCategories, setGeneratedCategories] = useState<string[]>([]);
+  const [generatedSeoTitle, setGeneratedSeoTitle] = useState("");
+  const [generatedSeoDescription, setGeneratedSeoDescription] = useState("");
+  const [generatedReadingTime, setGeneratedReadingTime] = useState<number>(0);
+  const [generatedReferences, setGeneratedReferences] = useState<Array<{ title: string; url: string }>>([]);
   const [generateLoading, setGenerateLoading] = useState(false);
   
   // Summarize State
@@ -114,6 +118,10 @@ export default function AIContentPage() {
         setGeneratedSummary(data.summary || "");
         setGeneratedTags(data.tags || []);
         setGeneratedCategories(data.categories || []);
+        setGeneratedSeoTitle(data.seoTitle || "");
+        setGeneratedSeoDescription(data.seoDescription || "");
+        setGeneratedReadingTime(data.readingTime || 0);
+        setGeneratedReferences(data.references || []);
         setMessage("Blog content generated successfully!");
       } else {
         setError(data.error || "Failed to generate content");
@@ -452,6 +460,23 @@ export default function AIContentPage() {
 
             {(generatedContent || generatedSummary || generatedTags.length > 0) && (
               <div className="mt-6 space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                {(generatedSeoTitle || generatedSeoDescription || generatedReadingTime) && (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SEO Title</label>
+                      <p className="text-gray-900 dark:text-white">{generatedSeoTitle || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reading Time</label>
+                      <p className="text-gray-900 dark:text-white">{generatedReadingTime ? `${generatedReadingTime} min` : "-"}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SEO Description</label>
+                      <p className="text-gray-900 dark:text-white">{generatedSeoDescription || "-"}</p>
+                    </div>
+                  </div>
+                )}
+
                 {generatedSummary && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -510,6 +535,20 @@ export default function AIContentPage() {
                       rows={10}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
+                  </div>
+                )}
+
+                {generatedReferences.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">References</label>
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      {generatedReferences.map((ref, idx) => (
+                        <li key={`${ref.url}-${idx}`} className="break-all">
+                          <span className="font-semibold text-gray-900 dark:text-white">{ref.title}</span>
+                          {ref.url ? ` - ${ref.url}` : ''}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

@@ -12,6 +12,11 @@ export default function CreateBlogPage() {
     slug: "",
     content: "",
     summary: "",
+    metaTitle: "",
+    metaDescription: "",
+    keywords: "",
+    excerpt: "",
+    readingTime: 0,
     tags: "",
     categories: "",
     featuredImage: "",
@@ -19,6 +24,7 @@ export default function CreateBlogPage() {
   });
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiReferences, setAiReferences] = useState<Array<{ title: string; url: string }>>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -76,13 +82,20 @@ export default function CreateBlogPage() {
       const data = await response.json();
 
       if (response.ok) {
+        const aiKeywords = Array.isArray(data.keywords) ? data.keywords : data.tags;
         setFormData(prev => ({
           ...prev,
           content: data.content || prev.content,
           summary: data.summary || prev.summary,
+          metaTitle: data.seoTitle || prev.metaTitle,
+          metaDescription: data.seoDescription || prev.metaDescription,
+          keywords: Array.isArray(aiKeywords) ? aiKeywords.join(', ') : prev.keywords,
+          readingTime: data.readingTime || prev.readingTime,
+          excerpt: data.summary || prev.excerpt,
           tags: data.tags?.join(', ') || prev.tags,
           categories: data.categories?.join(', ') || prev.categories
         }));
+        setAiReferences(data.references || []);
         setMessage("AI content generated successfully!");
       } else {
         setError(data.error || "Failed to generate content");
@@ -104,7 +117,9 @@ export default function CreateBlogPage() {
       const blogData = {
         ...formData,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        categories: formData.categories.split(',').map(cat => cat.trim()).filter(Boolean)
+        categories: formData.categories.split(',').map(cat => cat.trim()).filter(Boolean),
+        keywords: formData.keywords.split(',').map(keyword => keyword.trim()).filter(Boolean),
+        readingTime: formData.readingTime || undefined
       };
 
       const response = await fetch('/api/blog', {
@@ -242,6 +257,76 @@ export default function CreateBlogPage() {
               />
             </div>
 
+            {/* SEO Fields */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  SEO Title
+                </label>
+                <input
+                  type="text"
+                  id="metaTitle"
+                  value={formData.metaTitle}
+                  onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="SEO friendly title"
+                />
+              </div>
+              <div>
+                <label htmlFor="readingTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Reading Time (minutes)
+                </label>
+                <input
+                  type="number"
+                  id="readingTime"
+                  min={0}
+                  value={formData.readingTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, readingTime: Number(e.target.value) }))}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                SEO Description
+              </label>
+              <textarea
+                id="metaDescription"
+                value={formData.metaDescription}
+                onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Meta description for search engines"
+              />
+            </div>
+            <div>
+              <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                SEO Keywords
+              </label>
+              <input
+                type="text"
+                id="keywords"
+                value={formData.keywords}
+                onChange={(e) => setFormData(prev => ({ ...prev, keywords: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="keyword1, keyword2, keyword3"
+              />
+            </div>
+            <div>
+              <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Excerpt
+              </label>
+              <textarea
+                id="excerpt"
+                value={formData.excerpt}
+                onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
+                rows={2}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Short excerpt used in lists"
+              />
+            </div>
+
             {/* Content */}
             <div>
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -272,6 +357,20 @@ export default function CreateBlogPage() {
                 placeholder="tag1, tag2, tag3"
               />
             </div>
+
+            {aiReferences.length > 0 && (
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
+                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">AI References</div>
+                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  {aiReferences.map((ref, index) => (
+                    <li key={`${ref.url}-${index}`} className="break-all">
+                      <span className="font-medium text-gray-800 dark:text-gray-200">{ref.title}</span>
+                      {ref.url ? ` - ${ref.url}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Categories */}
             <div>
