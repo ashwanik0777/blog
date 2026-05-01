@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 interface Blog {
   _id: string;
   title: string;
+  slug?: string;
   content: string;
   summary?: string;
   metaTitle?: string;
@@ -80,8 +81,8 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
           keywords: Array.isArray(aiKeywords) ? aiKeywords.join(', ') : prev.keywords,
           readingTime: data.readingTime || prev.readingTime,
           excerpt: data.summary || prev.excerpt,
-          tags: data.tags?.join(', ') || prev.tags,
-          categories: data.categories?.join(', ') || prev.categories
+          tags: Array.isArray(data.tags) ? data.tags.join(', ') : prev.tags,
+          categories: Array.isArray(data.categories) ? data.categories.join(', ') : prev.categories
         }));
         setAiReferences(data.references || []);
         setMessage("AI content generated successfully!");
@@ -202,7 +203,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
                 Generating...
               </div>
             ) : (
-              "🤖 Generate with AI"
+              "Generate with AI"
             )}
           </button>
         </div>

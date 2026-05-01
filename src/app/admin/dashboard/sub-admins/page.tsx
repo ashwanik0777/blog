@@ -13,7 +13,8 @@ import {
   Plus,
   MoreVertical,
   CheckCircle,
-  XCircle
+  XCircle,
+  X
 } from "lucide-react";
 
 interface SubAdmin {
@@ -282,8 +283,8 @@ export default function SubAdminsPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Super Admins</p>
-              <p className="text-2xl font-bold text-purple-600">{subAdmins.filter(sa => sa.role === 'admin').length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Editors</p>
+              <p className="text-2xl font-bold text-purple-600">{subAdmins.filter(sa => sa.role === 'editor').length}</p>
             </div>
             <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
               <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -321,11 +322,11 @@ export default function SubAdminsPage() {
       </div>
 
       {/* Sub-Admins Table */}
-                <option value="editor">Editor</option>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">Loading sub-admins...</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Loading staff...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -333,7 +334,7 @@ export default function SubAdminsPage() {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Sub-Admin
+                    Staff Member
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Role
@@ -373,11 +374,11 @@ export default function SubAdminsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                        subAdmin.role === 'admin' 
+                        subAdmin.role === 'editor'
                           ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                           : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                       }`}>
-                        {subAdmin.role === 'admin' ? 'Super Admin' : 'Sub-Admin'}
+                        {subAdmin.role === 'editor' ? 'Editor' : 'Sub-Admin'}
                       </span>
                     </td>
                                          <td className="px-6 py-4">
@@ -526,11 +527,11 @@ export default function SubAdminsPage() {
                 </label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'sub-admin' | 'admin' }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'sub-admin' | 'editor' }))}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="sub-admin">Sub-Admin</option>
-                  <option value="admin">Super Admin</option>
+                  <option value="editor">Editor</option>
                 </select>
               </div>
 

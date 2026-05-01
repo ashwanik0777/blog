@@ -80,8 +80,8 @@ export default function CreateBlogPage() {
           keywords: Array.isArray(aiKeywords) ? aiKeywords.join(', ') : prev.keywords,
           readingTime: data.readingTime || prev.readingTime,
           excerpt: data.summary || prev.excerpt,
-          tags: data.tags?.join(', ') || prev.tags,
-          categories: data.categories?.join(', ') || prev.categories
+          tags: Array.isArray(data.tags) ? data.tags.join(', ') : prev.tags,
+          categories: Array.isArray(data.categories) ? data.categories.join(', ') : prev.categories
         }));
         setAiReferences(data.references || []);
         setMessage("AI content generated successfully!");
@@ -209,7 +209,7 @@ export default function CreateBlogPage() {
                     Generating...
                   </div>
                 ) : (
-                  "🤖 Generate with AI"
+                  "Generate with AI"
                 )}
               </button>
             </div>

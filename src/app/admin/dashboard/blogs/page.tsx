@@ -21,7 +21,7 @@ import {
 interface Blog {
   _id: string;
   title: string;
-  slug: string;
+  slug?: string;
   content: string;
   summary?: string;
   tags: string[];

@@ -41,11 +41,9 @@ export async function POST(req: Request) {
 
     // Try different model names and API versions (fallback approach)
     const modelsToTry = [
-      { model: 'gemini-pro', version: 'v1beta' }, // Original model
-      { model: 'gemini-1.5-pro-latest', version: 'v1beta' },
-      { model: 'gemini-1.5-flash-latest', version: 'v1beta' },
-      { model: 'gemini-1.5-pro', version: 'v1beta' },
-      { model: 'gemini-1.5-flash', version: 'v1beta' },
+      { model: 'gemini-2.5-flash', version: 'v1beta' },
+      { model: 'gemini-2.0-flash', version: 'v1beta' },
+      { model: 'gemini-flash-latest', version: 'v1beta' },
     ];
 
     let lastError: any = null;

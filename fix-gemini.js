@@ -1,4 +1,6 @@
-const GEMINI_ENDPOINTS = [
+const fs = require('fs');
+
+const geminiCode = `const GEMINI_ENDPOINTS = [
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
@@ -25,7 +27,7 @@ export async function geminiGenerateText(prompt: string) {
   let lastError = "Gemini API error";
 
   for (const endpoint of GEMINI_ENDPOINTS) {
-    const response = await fetch(`${endpoint}?key=${apiKey}`, {
+    const response = await fetch(\`\${endpoint}?key=\${apiKey}\`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
@@ -33,8 +35,8 @@ export async function geminiGenerateText(prompt: string) {
 
     if (!response.ok) {
       const bodyText = await response.text().catch(() => "");
-      console.error(`Endpoint failed: ${endpoint}`, bodyText || response.statusText);
-      lastError = `Gemini API error (${response.status}): ${bodyText || response.statusText}`;
+      console.error(\`Endpoint failed: \${endpoint}\`, bodyText || response.statusText);
+      lastError = \`Gemini API error (\${response.status}): \${bodyText || response.statusText}\`;
       continue;
     }
 
@@ -49,7 +51,7 @@ export function extractJson<T>(text: string, fallback: T): T {
   if (!text) return fallback;
   
   // Clean markdown fences if they exist
-  text = text.replace(/^s*```(json)?s*/g, '').replace(/```s*$/g, '');
+  text = text.replace(/^\s*\`\`\`(json)?\s*/g, '').replace(/\`\`\`\s*$/g, '');
   
   const firstBrace = text.indexOf("{");
   const lastBrace = text.lastIndexOf("}");
@@ -64,3 +66,6 @@ export function extractJson<T>(text: string, fallback: T): T {
     return fallback;
   }
 }
+`;
+
+fs.writeFileSync('src/lib/gemini.ts', geminiCode);

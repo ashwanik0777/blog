@@ -197,8 +197,8 @@ export default function AnalyticsPage() {
         topBlogs: [],
         topPages: [],
         userGrowth: [],
-        deviceStats: {},
-        browserStats: {}
+        deviceStats: { desktop: 0, mobile: 0, tablet: 0 },
+        browserStats: { chrome: 0, firefox: 0, safari: 0, edge: 0 }
       });
     } finally {
       setLoading(false);
