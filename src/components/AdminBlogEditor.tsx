@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 interface Blog {
   _id: string;
   title: string;
-  slug: string;
   content: string;
   summary?: string;
   metaTitle?: string;
@@ -31,7 +30,6 @@ interface AdminBlogEditorProps {
 export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode = blog ? 'edit' : 'create' }: AdminBlogEditorProps) {
   const [formData, setFormData] = useState({
     title: blog?.title || "",
-    slug: blog?.slug || "",
     content: blog?.content || "",
     summary: blog?.summary || "",
     metaTitle: blog?.metaTitle || "",
@@ -49,17 +47,6 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
   const [aiReferences, setAiReferences] = useState<Array<{ title: string; url: string }>>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (formData.title && mode === 'create') {
-      const slug = formData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setFormData(prev => ({ ...prev, slug }));
-    }
-  }, [formData.title, mode]);
 
   async function handleAIGenerate() {
     if (!formData.title.trim()) {
@@ -132,7 +119,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
         onSave(blogData as Blog);
       } else {
         // Make API call directly
-        const url = blog ? `/api/blog/${blog.slug}` : '/api/blog';
+        const url = blog ? `/api/blog/${blog._id}` : '/api/blog';
         const method = blog ? 'PUT' : 'POST';
         
         const response = await fetch(url, {
@@ -197,22 +184,6 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter blog title"
-            required
-          />
-        </div>
-
-        {/* Slug */}
-        <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            URL Slug *
-          </label>
-          <input
-            type="text"
-            id="slug"
-            value={formData.slug}
-            onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="blog-url-slug"
             required
           />
         </div>

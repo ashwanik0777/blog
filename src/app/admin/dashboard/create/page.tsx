@@ -9,7 +9,6 @@ export default function CreateBlogPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
-    slug: "",
     content: "",
     summary: "",
     metaTitle: "",
@@ -48,17 +47,6 @@ export default function CreateBlogPage() {
 
     checkAuth();
   }, [router]);
-
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (formData.title) {
-      const slug = formData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setFormData(prev => ({ ...prev, slug }));
-    }
-  }, [formData.title]);
 
   async function handleAIGenerate() {
     if (!formData.title.trim()) {
@@ -203,22 +191,6 @@ export default function CreateBlogPage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter blog title"
-                required
-              />
-            </div>
-
-            {/* Slug */}
-            <div>
-              <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                URL Slug *
-              </label>
-              <input
-                type="text"
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="blog-url-slug"
                 required
               />
             </div>

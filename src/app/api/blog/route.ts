@@ -10,6 +10,25 @@ function estimateReadingTime(content?: string) {
   return Math.max(1, Math.ceil(words / 200));
 }
 
+function toSlug(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+async function buildUniqueSlug(title: string) {
+  const base = toSlug(title) || 'blog';
+  let slug = base;
+  let counter = 1;
+  while (await Blog.exists({ slug })) {
+    counter += 1;
+    slug = `${base}-${counter}`;
+  }
+  return slug;
+}
+
 export async function GET(req: Request) {
   try {
     await dbConnect();
@@ -109,8 +128,10 @@ export async function POST(req: Request) {
       }
     }
 
+    const slug = data.slug || await buildUniqueSlug(data.title || 'blog');
     const blog = new Blog({
       ...data,
+      slug,
       author: author._id,
       status,
       flaggedReason,

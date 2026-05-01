@@ -35,26 +35,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const body = await req.json();
   
   try {
-    const blog = await Blog.findByIdAndUpdate(
-      id,
-      {
-        title: body.title,
-        slug: body.slug,
-        content: body.content,
-        summary: body.summary,
-        metaTitle: body.metaTitle,
-        metaDescription: body.metaDescription,
-        keywords: body.keywords,
-        excerpt: body.excerpt,
-        tags: body.tags,
-        categories: body.categories,
-        featuredImage: body.featuredImage,
-        published: body.published,
-        status: body.published ? 'approved' : 'draft',
-        readingTime: body.readingTime || estimateReadingTime(body.content),
-      },
-      { new: true }
-    );
+    const updates: any = {
+      title: body.title,
+      content: body.content,
+      summary: body.summary,
+      metaTitle: body.metaTitle,
+      metaDescription: body.metaDescription,
+      keywords: body.keywords,
+      excerpt: body.excerpt,
+      tags: body.tags,
+      categories: body.categories,
+      featuredImage: body.featuredImage,
+      published: body.published,
+      status: body.published ? 'approved' : 'draft',
+      readingTime: body.readingTime || estimateReadingTime(body.content),
+    };
+
+    if (body.slug) {
+      updates.slug = body.slug;
+    }
+
+    const blog = await Blog.findByIdAndUpdate(id, updates, { new: true });
     
     if (!blog) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(blog);
