@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { createAdminSessionToken, setAdminSessionCookie } from '@/lib/adminAuth';
+import { createAdminSessionToken } from '@/lib/adminAuth';
+import { setAdminSessionCookie } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
   try {
@@ -18,10 +19,21 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    let adminUser = await User.findOne({ email: normalizedEmail, role: 'admin' }).select('_id name email password role');
+    let staffUser = await User.findOne({
+      email: normalizedEmail,
+      role: { $in: ['admin', 'sub-admin', 'editor'] },
+    }).select('_id name email password role permissions disabled');
 
-    if (adminUser?.password) {
-      const isValid = await bcrypt.compare(password, adminUser.password);
+    if (staffUser) {
+      if (staffUser.disabled) {
+        return NextResponse.json({ error: 'Account disabled' }, { status: 403 });
+      }
+
+      if (!staffUser.password) {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      }
+
+      const isValid = await bcrypt.compare(password, staffUser.password);
       if (!isValid) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
@@ -30,33 +42,42 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
 
-      if (!adminUser) {
-        const hashedPassword = await bcrypt.hash(adminPassword, 12);
-        adminUser = await User.create({
-          name: process.env.ADMIN_NAME || 'Admin',
-          email: adminEmail,
-          password: hashedPassword,
-          role: 'admin',
-          emailVerified: new Date(),
-          disabled: false,
-        });
-      }
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      staffUser = await User.create({
+        name: process.env.ADMIN_NAME || 'Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin',
+        permissions: [
+          'manage_blogs',
+          'manage_users',
+          'manage_newsletter',
+          'view_analytics',
+          'ai_content_generation',
+          'manage_settings',
+          'manage_issues',
+        ],
+        emailVerified: new Date(),
+        disabled: false,
+      });
     }
 
     const token = createAdminSessionToken({
-      id: String(adminUser._id),
-      email: adminUser.email,
-      name: adminUser.name,
-      role: 'admin',
+      id: String(staffUser._id),
+      email: staffUser.email,
+      name: staffUser.name,
+      role: staffUser.role,
+      permissions: staffUser.permissions || [],
     });
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: String(adminUser._id),
-        email: adminUser.email,
-        name: adminUser.name,
-        role: 'admin',
+        id: String(staffUser._id),
+        email: staffUser.email,
+        name: staffUser.name,
+        role: staffUser.role,
+        permissions: staffUser.permissions || [],
       },
     });
 

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 import dbConnect from '@/lib/mongodb';
 import Settings from '@/models/Settings';
 
 export async function GET(req: Request) {
   try {
-    const { errorResponse } = requireAdmin(req);
+    const { errorResponse } = requirePermission(req, 'manage_settings');
     if (errorResponse) {
       return errorResponse;
     }
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { errorResponse } = requireAdmin(req);
+    const { errorResponse } = requirePermission(req, 'manage_settings');
     if (errorResponse) {
       return errorResponse;
     }

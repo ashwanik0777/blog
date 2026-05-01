@@ -5,7 +5,7 @@ export async function GET(req: Request) {
   try {
     const user = getAdminSessionFromRequest(req);
 
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json({ error: 'No session' }, { status: 401 });
     }
 
@@ -14,6 +14,7 @@ export async function GET(req: Request) {
         id: user.id,
         email: user.email,
         role: user.role,
+        permissions: user.permissions || [],
         name: user.name,
         image: null,
       }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Settings from '@/models/Settings';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 export async function GET() {
   await dbConnect();
@@ -14,7 +14,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   await dbConnect();
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_settings');
   if (errorResponse) {
     return errorResponse;
   }

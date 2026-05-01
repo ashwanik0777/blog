@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import mongoose, { Schema, models, model } from 'mongoose';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 // Newsletter Subscriber Schema
 const NewsletterSubscriberSchema = new Schema({
@@ -19,7 +19,7 @@ const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSub
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   await dbConnect();
 
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_newsletter');
   if (errorResponse) {
     return errorResponse;
   }
@@ -40,7 +40,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   await dbConnect();
 
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_newsletter');
   if (errorResponse) {
     return errorResponse;
   }

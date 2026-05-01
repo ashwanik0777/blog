@@ -26,6 +26,7 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   children?: MenuItem[];
   color: string;
+  requiredPermission?: string;
 }
 
 export default function DashboardLayout({
@@ -43,12 +44,15 @@ export default function DashboardLayout({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [userInfo, setUserInfo] = useState<{
     name: string;
-    role: "admin" | "faculty" | "volunteer";
+    role: "admin" | "sub-admin" | "editor";
+    permissions: string[];
     avatar?: string;
   }>({
-    name: "Admin User",
+    name: "Staff",
     role: "admin",
+    permissions: [],
   });
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Check system theme
   useEffect(() => {
@@ -80,44 +84,89 @@ export default function DashboardLayout({
       label: "Blog Management",
       icon: FileText,
       color: "text-blue-400",
+      requiredPermission: "manage_blogs",
     },
     {
       id: "analytics",
       label: "Analytics",
       icon: LineChart,
       color: "text-green-400",
+      requiredPermission: "view_analytics",
     },
     {
       id: "newsletter",
       label: "Newsletter",
       icon: Newspaper,
       color: "text-orange-400",
+      requiredPermission: "manage_newsletter",
     },
     {
       id: "users",
-      label: "User Management",
+      label: "Staff Management",
       icon: Users,
       color: "text-cyan-400",
+      requiredPermission: "manage_users",
     },
     {
       id: "ai-content",
       label: "AI Content",
       icon: FlaskConical,
       color: "text-yellow-400",
+      requiredPermission: "ai_content_generation",
     },
     {
       id: "issues",
       label: "Reported Issues",
       icon: AlertCircle,
       color: "text-red-400",
+      requiredPermission: "manage_issues",
     },
     {
       id: "settings",
       label: "Settings",
       icon: Settings,
       color: "text-gray-400",
+      requiredPermission: "manage_settings",
     },
   ];
+
+  useEffect(() => {
+    const loadSession = async () => {
+      try {
+        const response = await fetch('/api/auth/admin-session');
+        if (!response.ok) {
+          router.push('/admin');
+          return;
+        }
+        const data = await response.json();
+        setUserInfo({
+          name: data.user?.name || 'Staff',
+          role: data.user?.role || 'admin',
+          permissions: data.user?.permissions || [],
+        });
+      } catch (error) {
+        router.push('/admin');
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+
+    loadSession();
+  }, [router]);
+
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (userInfo.role === 'admin') return true;
+    return userInfo.permissions.includes(permission);
+  };
+
+  useEffect(() => {
+    if (!authChecked) return;
+    const current = menuItems.find((item) => pathname?.includes(`/admin/dashboard/${item.id}`));
+    if (current?.requiredPermission && !hasPermission(current.requiredPermission)) {
+      router.push('/admin/dashboard');
+    }
+  }, [authChecked, pathname]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -167,9 +216,9 @@ export default function DashboardLayout({
     switch (userInfo.role) {
       case "admin":
         return Shield;
-      case "faculty":
+      case "sub-admin":
         return User;
-      case "volunteer":
+      case "editor":
         return User;
       default:
         return User;
@@ -180,18 +229,22 @@ export default function DashboardLayout({
     switch (userInfo.role) {
       case "admin":
         return "Administrator";
-      case "faculty":
-        return "Faculty";
-      case "volunteer":
-        return "Volunteer";
+      case "sub-admin":
+        return "Sub Admin";
+      case "editor":
+        return "Editor";
       default:
-        return "User";
+        return "Staff";
     }
   };
 
   const renderMenuItem = (item: MenuItem) => {
     const isActive = pathname?.includes(`/admin/dashboard/${item.id}`);
     const Icon = item.icon;
+
+    if (!hasPermission(item.requiredPermission)) {
+      return null;
+    }
 
     if (sidebarCollapsed) {
       return (
@@ -213,7 +266,7 @@ export default function DashboardLayout({
     return (
       <button
         key={item.id}
-        onClick={() => router.push(`/admin/dashboard/${item.id}`)}
+          onClick={() => router.push(`/admin/dashboard/${item.id}`)}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
           isActive
             ? "bg-blue-600 text-white shadow-lg"

@@ -5,14 +5,14 @@ import User from '@/models/User';
 import Visitor from '@/models/Visitor';
 import Issue from '@/models/Issue';
 import Comment from '@/models/Comment';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    const { errorResponse } = requireAdmin(req);
+    const { errorResponse } = requirePermission(req, 'view_analytics');
 
     if (errorResponse) {
       // Return empty data instead of error to prevent frontend crashes

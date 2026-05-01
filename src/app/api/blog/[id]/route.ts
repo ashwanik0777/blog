@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 function estimateReadingTime(content?: string) {
   if (!content) return 1;
@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_blogs');
   if (errorResponse) {
     return errorResponse;
   }
@@ -66,7 +66,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_blogs');
   if (errorResponse) {
     return errorResponse;
   }
@@ -101,7 +101,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return response;
     }
     // If not a view increment, allow admin to update status/notes
-    const { errorResponse } = requireAdmin(req);
+    const { errorResponse } = requirePermission(req, 'manage_blogs');
     if (errorResponse) {
       return errorResponse;
     }

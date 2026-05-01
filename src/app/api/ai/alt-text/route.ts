@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'ai_content_generation');
   if (errorResponse) {
     return errorResponse;
   }

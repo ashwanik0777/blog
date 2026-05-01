@@ -27,7 +27,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'admin' | 'sub-admin' | 'editor' | 'reader';
+  role: 'admin' | 'sub-admin' | 'editor';
   permissions?: string[];
   disabled: boolean;
   createdAt: string;
@@ -46,26 +46,35 @@ export default function UserManagementPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'sub-admins'>('users');
 
   // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: 'reader' as 'admin' | 'sub-admin' | 'editor' | 'reader',
+    role: 'sub-admin' as 'sub-admin' | 'editor',
     permissions: [] as string[]
   });
 
   const availablePermissions = [
     'manage_blogs',
-    'manage_comments',
     'manage_users',
     'view_analytics',
     'manage_newsletter',
     'ai_content_generation',
-    'manage_settings'
+    'manage_settings',
+    'manage_issues'
   ];
+
+  const permissionLabels: Record<string, string> = {
+    manage_blogs: 'Manage blogs',
+    manage_users: 'Manage staff',
+    view_analytics: 'View analytics',
+    manage_newsletter: 'Manage newsletter',
+    ai_content_generation: 'Use AI tools',
+    manage_settings: 'Manage settings',
+    manage_issues: 'Manage issues',
+  };
 
   // Check if user is admin
   useEffect(() => {
@@ -192,7 +201,7 @@ export default function UserManagementPage() {
       name: "",
       email: "",
       password: "",
-      role: 'reader',
+      role: 'sub-admin',
       permissions: []
     });
   }
@@ -208,18 +217,16 @@ export default function UserManagementPage() {
     });
   }
 
-  // Filter users
+  // Filter staff users
   const filteredUsers = users.filter(user => {
+    if (user.role === 'admin') return false;
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && !user.disabled) ||
                          (filterStatus === 'inactive' && user.disabled);
-    const matchesTab = activeTab === 'users' ? 
-                      (user.role === 'reader' || user.role === 'editor') :
-                      (user.role === 'admin' || user.role === 'sub-admin');
-    return matchesSearch && matchesRole && matchesStatus && matchesTab;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   if (checkingAuth) {
@@ -241,10 +248,10 @@ export default function UserManagementPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              User Management
+              Staff Management
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Manage all users and their roles
+              Create sub-admins and editors with specific permissions
             </p>
           </div>
           <button
@@ -252,7 +259,7 @@ export default function UserManagementPage() {
             className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
           >
             <UserPlus className="w-5 h-5" />
-            <span>Create User</span>
+            <span>Create Staff</span>
           </button>
         </div>
       </div>
@@ -266,8 +273,8 @@ export default function UserManagementPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{users.length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Staff</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{filteredUsers.length}</p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
               <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -283,8 +290,8 @@ export default function UserManagementPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Users</p>
-              <p className="text-3xl font-bold text-green-600">{users.filter(u => !u.disabled).length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Staff</p>
+              <p className="text-3xl font-bold text-green-600">{users.filter(u => u.role !== 'admin' && !u.disabled).length}</p>
             </div>
             <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
               <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -300,8 +307,8 @@ export default function UserManagementPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Admins</p>
-              <p className="text-3xl font-bold text-purple-600">{users.filter(u => u.role === 'admin').length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Sub Admins</p>
+              <p className="text-3xl font-bold text-purple-600">{users.filter(u => u.role === 'sub-admin').length}</p>
             </div>
             <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
               <Crown className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -317,8 +324,8 @@ export default function UserManagementPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Inactive</p>
-              <p className="text-3xl font-bold text-red-600">{users.filter(u => u.disabled).length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Editors</p>
+              <p className="text-3xl font-bold text-red-600">{users.filter(u => u.role === 'editor').length}</p>
             </div>
             <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
               <UserX className="w-6 h-6 text-red-600 dark:text-red-400" />
@@ -327,34 +334,8 @@ export default function UserManagementPage() {
         </motion.div>
       </div>
 
-      {/* Tabs */}
+      {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
-            <button 
-              onClick={() => setActiveTab('users')}
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
-                activeTab === 'users'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Users ({users.filter(u => u.role === 'reader' || u.role === 'editor').length})
-            </button>
-            <button 
-              onClick={() => setActiveTab('sub-admins')}
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
-                activeTab === 'sub-admins'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Sub-Admins ({users.filter(u => u.role === 'admin' || u.role === 'sub-admin').length})
-            </button>
-          </nav>
-        </div>
-
-        {/* Filters */}
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
@@ -375,17 +356,8 @@ export default function UserManagementPage() {
                 className="w-full pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
               >
                 <option value="all">All Roles</option>
-                {activeTab === 'users' ? (
-                  <>
-                    <option value="editor">Editor</option>
-                    <option value="reader">Reader</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="admin">Admin</option>
-                    <option value="sub-admin">Sub-Admin</option>
-                  </>
-                )}
+                <option value="sub-admin">Sub-Admin</option>
+                <option value="editor">Editor</option>
               </select>
             </div>
             <div className="relative">
@@ -470,7 +442,7 @@ export default function UserManagementPage() {
                       }`}>
                         {user.role === 'admin' ? 'Admin' : 
                          user.role === 'sub-admin' ? 'Sub-Admin' :
-                         user.role === 'editor' ? 'Editor' : 'Reader'}
+                         'Editor'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -526,12 +498,12 @@ export default function UserManagementPage() {
       </div>
 
                 {filteredUsers.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 text-lg">No {activeTab === 'users' ? 'users' : 'sub-admins'} found</p>
-              <p className="text-gray-400 dark:text-gray-500">Create your first {activeTab === 'users' ? 'user' : 'sub-admin'} to get started</p>
-            </div>
-          )}
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 text-lg">No staff members found</p>
+                    <p className="text-gray-400 dark:text-gray-500">Create your first sub-admin or editor to get started</p>
+                  </div>
+                )}
         </div>
 
       {/* Create/Edit Modal */}
@@ -540,7 +512,7 @@ export default function UserManagementPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingUser ? 'Edit User' : 'Create New User'}
+                {editingUser ? 'Edit Staff' : 'Create New Staff'}
               </h2>
               <button
                 onClick={() => {
@@ -612,11 +584,35 @@ export default function UserManagementPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as any }))}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="reader">Reader</option>
-                  <option value="editor">Editor</option>
                   <option value="sub-admin">Sub-Admin</option>
-                  <option value="admin">Admin</option>
+                  <option value="editor">Editor</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Permissions
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availablePermissions.map((permission) => (
+                    <label key={permission} className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={formData.permissions.includes(permission)}
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            permissions: e.target.checked
+                              ? [...prev.permissions, permission]
+                              : prev.permissions.filter((item) => item !== permission),
+                          }));
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>{permissionLabels[permission] || permission}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -635,7 +631,7 @@ export default function UserManagementPage() {
                   type="submit"
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
                 >
-                  {editingUser ? 'Update User' : 'Create User'}
+                  {editingUser ? 'Update Staff' : 'Create Staff'}
                 </button>
               </div>
             </form>

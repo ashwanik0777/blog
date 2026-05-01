@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Issue from '@/models/Issue';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { user, errorResponse } = requireAdmin(req);
+    const { user, errorResponse } = requirePermission(req, 'manage_issues');
     if (errorResponse || !user) {
       return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
@@ -43,7 +43,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { errorResponse } = requireAdmin(req);
+    const { errorResponse } = requirePermission(req, 'manage_issues');
     if (errorResponse) {
       return errorResponse;
     }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import cloudinary from 'cloudinary';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,7 +11,7 @@ cloudinary.v2.config({
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_blogs');
   if (errorResponse) {
     return errorResponse;
   }

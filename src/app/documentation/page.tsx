@@ -43,7 +43,7 @@ const sections = [
     points: [
       "Admin manages site settings, users, and approvals.",
       "Editors handle drafts and updates.",
-      "Readers only view content and comment where enabled.",
+      "Readers access content without an account.",
     ],
     icon: ShieldCheck,
   },
@@ -133,7 +133,7 @@ export default function DocumentationPage() {
         <section className="mt-16 rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
           <h2 className={`${headingFont.className} text-3xl font-bold`}>Platform Structure</h2>
           <p className="mt-3 text-gray-600">
-            The platform is divided into clear areas so readers, editors, and admins always know where to go.
+            The platform is divided into clear areas so editors and admins always know where to go.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {structure.map((item) => (

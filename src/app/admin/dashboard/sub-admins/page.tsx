@@ -20,7 +20,7 @@ interface SubAdmin {
   _id: string;
   name: string;
   email: string;
-  role: 'sub-admin' | 'admin';
+  role: 'sub-admin' | 'editor';
   permissions: string[];
   status: 'active' | 'inactive';
   createdAt: string;
@@ -44,17 +44,17 @@ export default function SubAdminsPage() {
     email: "",
     password: "",
     permissions: [] as string[],
-    role: 'sub-admin' as 'sub-admin' | 'admin'
+    role: 'sub-admin' as 'sub-admin' | 'editor'
   });
 
   const availablePermissions = [
     'manage_blogs',
-    'manage_comments',
     'manage_users',
     'view_analytics',
     'manage_newsletter',
     'ai_content_generation',
-    'manage_settings'
+    'manage_settings',
+    'manage_issues'
   ];
 
   // Check if user is admin
@@ -321,7 +321,7 @@ export default function SubAdminsPage() {
       </div>
 
       {/* Sub-Admins Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <option value="editor">Editor</option>
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Issue from '@/models/Issue';
+import { requirePermission } from '@/lib/adminAuth';
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +35,8 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const { errorResponse } = requirePermission(req, 'manage_issues');
+    if (errorResponse) return errorResponse;
     await dbConnect();
     const url = new URL(req.url!);
     const status = url.searchParams.get('status');

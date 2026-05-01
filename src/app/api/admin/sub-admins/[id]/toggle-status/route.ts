@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('admin-token');
-
-    if (!token) {
-      return NextResponse.json({ error: 'No session' }, { status: 401 });
-    }
-
-    const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) return errorResponse;
 
     await dbConnect();
 

@@ -1,11 +1,13 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 
+export type StaffRole = 'admin' | 'sub-admin' | 'editor';
 export type AdminSessionUser = {
   id: string;
   email: string;
   name?: string;
-  role: 'admin';
+  role: StaffRole;
+  permissions?: string[];
 };
 
 const ADMIN_SESSION_COOKIE = 'admin_session';
@@ -37,13 +39,14 @@ export function getAdminSessionFromRequest(req: Request): AdminSessionUser | nul
     if (!token) return null;
 
     const decoded = jwt.verify(token, getJwtSecret()) as JwtPayload & AdminSessionUser;
-    if (!decoded || decoded.role !== 'admin') return null;
+    if (!decoded || !decoded.role) return null;
 
     return {
       id: decoded.id,
       email: decoded.email,
       name: decoded.name,
-      role: 'admin',
+      role: decoded.role,
+      permissions: decoded.permissions || [],
     };
   } catch {
     return null;
@@ -53,10 +56,47 @@ export function getAdminSessionFromRequest(req: Request): AdminSessionUser | nul
 export function requireAdmin(req: Request) {
   const user = getAdminSessionFromRequest(req);
 
-  if (!user) {
+  if (!user || user.role !== 'admin') {
     return {
       user: null,
       errorResponse: NextResponse.json({ error: 'Admin access required' }, { status: 401 }),
+    };
+  }
+
+  return { user, errorResponse: null };
+}
+
+export function requireStaff(req: Request) {
+  const user = getAdminSessionFromRequest(req);
+
+  if (!user) {
+    return {
+      user: null,
+      errorResponse: NextResponse.json({ error: 'Staff access required' }, { status: 401 }),
+    };
+  }
+
+  return { user, errorResponse: null };
+}
+
+export function requirePermission(req: Request, permissions: string | string[]) {
+  const { user, errorResponse } = requireStaff(req);
+  if (errorResponse || !user) {
+    return { user: null, errorResponse };
+  }
+
+  if (user.role === 'admin') {
+    return { user, errorResponse: null };
+  }
+
+  const required = Array.isArray(permissions) ? permissions : [permissions];
+  const userPermissions = user.permissions || [];
+  const hasAccess = required.every((permission) => userPermissions.includes(permission));
+
+  if (!hasAccess) {
+    return {
+      user: null,
+      errorResponse: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }),
     };
   }
 

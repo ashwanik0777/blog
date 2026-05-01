@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import User from '@/models/User';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 function estimateReadingTime(content?: string) {
   if (!content) return 1;
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     const skip = (page - 1) * pageSize;
 
     if (isAdmin) {
-      const { errorResponse } = requireAdmin(req);
+      const { errorResponse } = requirePermission(req, 'manage_blogs');
 
       if (errorResponse) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
 
-    const { user, errorResponse } = requireAdmin(req);
+    const { user, errorResponse } = requirePermission(req, 'manage_blogs');
     if (errorResponse || !user) {
       return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 401 });
     }

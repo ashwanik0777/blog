@@ -1,24 +1,13 @@
 import { NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('admin-token');
-
-    if (!token) {
-      return NextResponse.json({ error: 'No session' }, { status: 401 });
-    }
-
-    const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) return errorResponse;
 
     await dbConnect();
     
@@ -34,23 +23,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('admin-token');
+    const { errorResponse } = requireAdmin(req);
+    if (errorResponse) return errorResponse;
 
-    if (!token) {
-      return NextResponse.json({ error: 'No session' }, { status: 401 });
-    }
-
-    const decoded = verify(token.value, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
-    
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    const { name, email, password, role } = await req.json();
+    const { name, email, password, role, permissions } = await req.json();
 
     if (!name || !email || !password || !role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (!['sub-admin', 'editor'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
     await dbConnect();
@@ -70,6 +53,7 @@ export async function POST(req: Request) {
       email,
       password: hashedPassword,
       role,
+      permissions: permissions || [],
       disabled: false
     });
 

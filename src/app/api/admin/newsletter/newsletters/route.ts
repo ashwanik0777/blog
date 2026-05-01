@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import mongoose, { Schema, models, model } from 'mongoose';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requirePermission } from '@/lib/adminAuth';
 
 // Newsletter Schema
 const NewsletterSchema = new Schema({
@@ -21,7 +21,7 @@ const Newsletter = models.Newsletter || model('Newsletter', NewsletterSchema);
 export async function GET(req: Request) {
   await dbConnect();
 
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_newsletter');
   if (errorResponse) {
     return errorResponse;
   }
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   await dbConnect();
 
-  const { errorResponse } = requireAdmin(req);
+  const { errorResponse } = requirePermission(req, 'manage_newsletter');
   if (errorResponse) {
     return errorResponse;
   }
