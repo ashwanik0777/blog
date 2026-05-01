@@ -40,7 +40,7 @@ export default function BlogCard({ blog }: { blog: any }) {
         )}
         {blog.featured && (
           <div className="absolute top-3 left-3 rounded-xl border border-blue-200/60 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-blue-900/30">
-            ⭐ Featured
+            Featured
           </div>
         )}
       </div>

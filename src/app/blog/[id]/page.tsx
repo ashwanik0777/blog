@@ -5,10 +5,11 @@ import Image from "next/image";
 import Comments from "@/components/Comments";
 import Footer from "@/components/Footer";
 import CopyButton from "@/components/CopyButton";
+import ShareMenu from "@/components/ShareMenu";
 import BlogViewTracker from "@/components/BlogViewTracker";
 import ThemeToggle from "@/components/ThemeToggle";
 import Link from "next/link";
-import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart, ChevronRight, Home } from "lucide-react";
+import { Calendar, Clock, User, Eye, Tag, FolderOpen, BookOpen, ChevronRight, Home } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
 import Blog from "@/models/Blog";
 import "@/models/User";
@@ -143,6 +144,9 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || origin;
   const url = `${baseUrl}/blog/${blog._id}`;
+  const shareDescription = (blog.summary || blog.excerpt || blog.content || "")
+    .replace(/\s+/g, " ")
+    .slice(0, 180);
 
   const relatedBlogs = await getRelatedBlogs(blog.categories || [], blog._id);
 
@@ -321,9 +325,12 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Share this post:</span>
                       <div className="flex gap-2">
                         <CopyButton text={url} />
-                        <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Share">
-                          <Share2 className="w-5 h-5" />
-                        </button>
+                        <ShareMenu
+                          url={url}
+                          title={blog.title}
+                          description={shareDescription}
+                          imageUrl={blog.featuredImage}
+                        />
                       </div>
                     </div>
                  </div>
