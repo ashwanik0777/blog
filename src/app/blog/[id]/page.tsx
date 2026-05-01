@@ -11,10 +11,11 @@ import Link from "next/link";
 import { Calendar, Clock, User, Eye, Share2, ArrowLeft, Tag, FolderOpen, BookOpen, TrendingUp, Heart, ChevronRight, Home } from "lucide-react";
 import dbConnect from "@/lib/mongodb";
 import Blog from "@/models/Blog";
+import "@/models/User";
 import { headers } from "next/headers";
 import mongoose from "mongoose";
 
-export const revalidate = 60;
+export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 async function getRequestOrigin() {
