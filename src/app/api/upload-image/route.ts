@@ -35,7 +35,13 @@ export async function POST(req: Request) {
       stream.end(buffer);
     });
 
-    return NextResponse.json({ url: result.secure_url });
+    return NextResponse.json({
+      url: result.secure_url,
+      bytes: result.bytes,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+    });
   } catch (e) {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }

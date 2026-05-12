@@ -49,6 +49,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [imageMeta, setImageMeta] = useState<{ bytes?: number; width?: number; height?: number; format?: string } | null>(null);
 
   async function handleAIGenerate() {
     if (!formData.title.trim()) {
@@ -102,6 +103,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
     if (!file) return;
     setUploading(true);
     setError("");
+    setImageMeta(null);
 
     const form = new FormData();
     form.append('file', file);
@@ -116,6 +118,12 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
         throw new Error(data.error || 'Upload failed');
       }
       setFormData(prev => ({ ...prev, featuredImage: data.url }));
+      setImageMeta({
+        bytes: data.bytes,
+        width: data.width,
+        height: data.height,
+        format: data.format,
+      });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
     } finally {
@@ -392,10 +400,20 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
                 alt="Featured"
                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
               />
+              {imageMeta?.bytes ? (
+                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                  Size: {(imageMeta.bytes / 1024).toFixed(1)} KB
+                  {imageMeta.width && imageMeta.height ? ` • ${imageMeta.width}x${imageMeta.height}` : ''}
+                  {imageMeta.format ? ` • ${imageMeta.format.toUpperCase()}` : ''}
+                </div>
+              ) : null}
               <button
                 type="button"
                 className="mt-2 text-sm text-red-600 hover:text-red-700"
-                onClick={() => setFormData(prev => ({ ...prev, featuredImage: '' }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, featuredImage: '' }));
+                  setImageMeta(null);
+                }}
               >
                 Remove image
               </button>
@@ -406,7 +424,10 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
               type="url"
               id="featuredImage"
               value={formData.featuredImage}
-              onChange={(e) => setFormData(prev => ({ ...prev, featuredImage: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, featuredImage: e.target.value }));
+                setImageMeta(null);
+              }}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Paste image link (optional)"
             />
@@ -422,9 +443,6 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
                 <span className="text-sm text-blue-600">Uploading...</span>
               )}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              You can upload an image to Cloudinary or paste a direct image URL. Leave empty if no image.
-            </p>
           </div>
         </div>
 

@@ -123,6 +123,18 @@ function getReadingTime(content: string) {
   return Math.max(1, Math.ceil(words / 200));
 }
 
+function hasBlockChild(children: React.ReactNode) {
+  return React.Children.toArray(children).some((child) => {
+    if (!child || typeof child !== 'object') return false;
+    const element = child as React.ReactElement<any>;
+    const type = element.type as unknown;
+    if (typeof type === 'string') {
+      return ['div', 'pre', 'table', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'].includes(type);
+    }
+    return Boolean(element.props?.inline === false);
+  });
+}
+
 export default async function BlogDetailPage({ params }: BlogPageParams) {
   const { id } = await params;
   const origin = await getRequestOrigin();
@@ -228,17 +240,20 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
            </header>
 
            {/* Featured Image */}
-           {blog.featuredImage && (
-              <div className="relative w-full aspect-[16/9] md:aspect-[21/9] mb-16 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800 group">
-                 <Image 
-                    src={blog.featuredImage} 
-                    alt={blog.title} 
-                    fill 
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    priority
-                 />
-              </div>
-           )}
+              {blog.featuredImage && (
+                <div className="mb-16">
+                  <div className="relative w-full max-w-5xl mx-auto h-[52vh] md:h-[60vh] min-h-[320px] rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+                    <Image 
+                      src={blog.featuredImage} 
+                      alt={blog.title} 
+                      fill 
+                      className="object-contain"
+                      sizes="(min-width: 1024px) 900px, (min-width: 768px) 85vw, 100vw"
+                      priority
+                    />
+                  </div>
+                </div>
+              )}
 
            {/* Content Column - Constrained Width */}
            <div className="max-w-5xl mx-auto">
@@ -249,7 +264,24 @@ export default async function BlogDetailPage({ params }: BlogPageParams) {
                       h2: ({node, ...props}) => <h2 className="text-2xl md:text-3xl font-bold mt-10 mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-800 pb-2" {...props} />,
                       h3: ({node, ...props}) => <h3 className="text-xl md:text-2xl font-bold mt-8 mb-3 text-gray-900 dark:text-white" {...props} />,
                       h4: ({node, ...props}) => <h4 className="text-lg md:text-xl font-bold mt-6 mb-2 text-gray-900 dark:text-white" {...props} />,
-                      p: ({node, ...props}) => <p className="text-lg leading-8 text-gray-700 dark:text-gray-300 mb-6" {...props} />,
+                      p: ({node, ...props}) => {
+                        const { children, className, ...rest } = props;
+                        const mergedClassName = ["text-lg leading-8 text-gray-700 dark:text-gray-300 mb-6", className]
+                          .filter(Boolean)
+                          .join(" ");
+                        if (hasBlockChild(children)) {
+                          return (
+                            <div className={mergedClassName} {...rest}>
+                              {children}
+                            </div>
+                          );
+                        }
+                        return (
+                          <p className={mergedClassName} {...rest}>
+                            {children}
+                          </p>
+                        );
+                      },
                       ul: ({node, ...props}) => <ul className="list-disc list-outside ml-6 mb-6 text-gray-700 dark:text-gray-300 space-y-2 marker:text-blue-500" {...props} />,
                       ol: ({node, ...props}) => <ol className="list-decimal list-outside ml-6 mb-6 text-gray-700 dark:text-gray-300 space-y-2 marker:text-blue-500 font-medium" {...props} />,
                       li: ({node, ...props}) => <li className="pl-2" {...props} />,
