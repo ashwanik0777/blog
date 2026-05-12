@@ -48,6 +48,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
   const [aiReferences, setAiReferences] = useState<Array<{ title: string; url: string }>>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   async function handleAIGenerate() {
     if (!formData.title.trim()) {
@@ -93,6 +94,32 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
       setError("Error generating content");
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: form,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
+      }
+      setFormData(prev => ({ ...prev, featuredImage: data.url }));
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -356,16 +383,49 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
         {/* Featured Image */}
         <div>
           <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Featured Image URL
+            Featured Image
           </label>
-          <input
-            type="url"
-            id="featuredImage"
-            value={formData.featuredImage}
-            onChange={(e) => setFormData(prev => ({ ...prev, featuredImage: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="https://example.com/image.jpg"
-          />
+          {formData.featuredImage && (
+            <div className="mb-3">
+              <img
+                src={formData.featuredImage}
+                alt="Featured"
+                className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+              <button
+                type="button"
+                className="mt-2 text-sm text-red-600 hover:text-red-700"
+                onClick={() => setFormData(prev => ({ ...prev, featuredImage: '' }))}
+              >
+                Remove image
+              </button>
+            </div>
+          )}
+          <div className="space-y-3">
+            <input
+              type="url"
+              id="featuredImage"
+              value={formData.featuredImage}
+              onChange={(e) => setFormData(prev => ({ ...prev, featuredImage: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Paste image link (optional)"
+            />
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                disabled={uploading}
+              />
+              {uploading && (
+                <span className="text-sm text-blue-600">Uploading...</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              You can upload an image to Cloudinary or paste a direct image URL. Leave empty if no image.
+            </p>
+          </div>
         </div>
 
         {/* Published Toggle */}

@@ -46,7 +46,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
       }
 
-      const selectFields = 'title summary excerpt featuredImage categories tags featured readingTime createdAt author published publishedAt status';
+      const selectFields = 'title summary excerpt content featuredImage categories tags featured readingTime createdAt author published publishedAt status views metaTitle metaDescription keywords';
       const [total, blogs] = await Promise.all([
         Blog.countDocuments(),
         Blog.find()

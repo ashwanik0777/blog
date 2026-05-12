@@ -23,16 +23,18 @@ export async function POST(req: Request) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   try {
-    const upload = await cloudinary.v2.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
-      if (error || !result) throw error;
-      return result;
+    const result = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+      const stream = cloudinary.v2.uploader.upload_stream({ resource_type: 'image' }, (error, uploadResult) => {
+        if (error || !uploadResult) {
+          reject(error || new Error('Upload failed'));
+          return;
+        }
+        resolve(uploadResult);
+      });
+
+      stream.end(buffer);
     });
-    upload.end(buffer);
-    const result = await new Promise((resolve, reject) => {
-      upload.on('finish', resolve);
-      upload.on('error', reject);
-    });
-    // @ts-ignore
+
     return NextResponse.json({ url: result.secure_url });
   } catch (e) {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
