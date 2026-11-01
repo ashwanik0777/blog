@@ -1,27 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import ClientProviders from "./ClientProviders";
 import VisitorTracker from "@/components/VisitorTracker";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TAGLINE, getSiteUrl } from "@/lib/site";
 
-const inter = Inter({
+// Fonts are self-hosted (variable woff2 files from Fontsource, OFL-1.1) so the build
+// never has to download anything from Google Fonts.
+const inter = localFont({
+  src: "./fonts/inter-latin-var.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
+const jakarta = localFont({
+  src: "./fonts/plus-jakarta-sans-latin-var.woff2",
   variable: "--font-jakarta",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: "200 800",
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin-var.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
   display: "swap",
+  preload: false,
 });
 
 const siteUrl = getSiteUrl();
