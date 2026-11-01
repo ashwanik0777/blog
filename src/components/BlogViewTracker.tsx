@@ -14,7 +14,7 @@ export default function BlogViewTracker({ blogId }: { blogId: string }) {
     };
 
     if ("requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(sendView, { timeout: 2000 });
+      window.requestIdleCallback(sendView, { timeout: 2000 });
     } else {
       setTimeout(sendView, 0);
     }

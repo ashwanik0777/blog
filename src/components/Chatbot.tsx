@@ -1,254 +1,156 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { Bot, Loader2, Send, Sparkles, User } from "lucide-react";
 
-export default function Chatbot() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { 
-      role: "assistant", 
-      content: "Hi! I'm TechUpdatesZone AI assistant. Ask me anything about tech, programming, or this blog!",
-      name: "TechUpdatesZone AI"
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+const SUGGESTIONS = ["Explain React Server Components", "Best way to learn TypeScript?", "What's new in AI tooling?"];
+const MAX_INPUT = 1000;
+
+export default function Chatbot({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content: "Hi! I'm the TechUpdatesZone assistant. Ask me anything about programming, web development or tech news.",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
-    async function fetchSetting() {
-      try {
-        const res = await fetch("/api/settings/chatbot");
-        const data = await res.json();
-        setEnabled(data.chatbotEnabled !== false);
-      } catch {
-        setEnabled(true);
-      }
-    }
-    fetchSetting();
-    function onStorage() { fetchSetting(); }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  useEffect(() => {
-    if (open && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (open) inputRef.current?.focus();
   }, [open]);
 
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  async function sendMessage() {
-    if (!input.trim() || loading) return;
-    
-    const userMessage = input.trim();
-    const newMessages = [
-      ...messages,
-      { role: "user", content: userMessage, name: "You" }
-    ];
-    
-    setMessages(newMessages);
+  async function sendMessage(text = input) {
+    const userMessage = text.trim().slice(0, MAX_INPUT);
+    if (!userMessage || loading) return;
+
+    const nextMessages: ChatMessage[] = [...messages, { role: "user", content: userMessage }];
+    setMessages(nextMessages);
     setInput("");
     setLoading(true);
 
     try {
-      // Format messages for API (include system message)
-      const apiMessages = [
-        { role: "system", content: "You are TechUpdatesZone AI, a helpful assistant for a tech blog. Help users with questions about technology, programming, web development, and blog content. Be concise and friendly." },
-        ...newMessages.map(m => ({ role: m.role, content: m.content }))
-      ];
-
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: nextMessages.slice(-12) }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to get response");
-      }
-
-      setMessages([
-        ...newMessages,
-        { 
-          role: "assistant", 
-          content: data.content || "Sorry, I couldn't respond right now.",
-          name: "TechUpdatesZone AI"
-        }
-      ]);
-    } catch (error: any) {
-      console.error("Chat error:", error);
-      setMessages([
-        ...newMessages,
-        { 
-          role: "assistant", 
-          content: "Sorry, I encountered an error. Please try again later.",
-          name: "TechUpdatesZone AI"
-        }
-      ]);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to get response");
+      setMessages([...nextMessages, { role: "assistant", content: data.content || "Sorry, I couldn't respond right now." }]);
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : "Something went wrong.";
+      setMessages([...nextMessages, { role: "assistant", content: `⚠️ ${message}` }]);
     } finally {
       setLoading(false);
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }
-
-  if (!enabled) return null;
+  if (!open) return null;
 
   return (
-    <>
-      {/* Chatbot Toggle Button */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white rounded-full shadow-2xl w-12 h-12 flex items-center justify-center hover:bg-blue-700 transition-colors"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Open AI Chatbot"
-      >
-        {open ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MessageCircle className="h-6 w-6" />
-        )}
-      </motion.button>
+    <div
+      role="dialog"
+      aria-label="AI assistant"
+      className="fixed bottom-[4.5rem] right-4 z-50 flex max-h-[min(640px,calc(100dvh-8rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/20 animate-fade-up dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      <div className="flex items-center gap-3 bg-brand-600 px-5 py-4 text-white">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+          <Sparkles className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="font-display text-sm font-bold">TechUpdatesZone AI</p>
+          <p className="text-xs text-white/80">Usually replies in a few seconds</p>
+        </div>
+      </div>
 
-      {/* Chatbot Window */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-28 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-white dark:bg-gray-800 rounded-xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700"
-            style={{ maxHeight: "600px" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-blue-600 text-white rounded-t-xl">
-              <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                <span className="font-bold text-lg">TechUpdatesZone AI</span>
+      <div ref={chatRef} className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-5">
+        {messages.map((message, index) => (
+          <div key={index} className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            {message.role === "assistant" && (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                <Bot className="h-4 w-4" />
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-white hover:text-gray-200 transition-colors p-1"
-                aria-label="Close chatbot"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Messages Container */}
-            <div
-              ref={chatRef}
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-              style={{ maxHeight: "400px", minHeight: "300px" }}
+            )}
+            <p
+              className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm leading-6 ${
+                message.role === "user"
+                  ? "rounded-br-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                  : "rounded-bl-md bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
+              }`}
             >
-              {messages.map((m, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {m.role === "assistant" && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                      <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                  )}
-                  <div className={`flex flex-col max-w-[80%] ${m.role === "user" ? "items-end" : "items-start"}`}>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-2">
-                      {m.name || (m.role === "user" ? "You" : "TechUpdatesZone AI")}
-                    </span>
-                    <div
-                      className={`px-4 py-2 rounded-lg ${
-                        m.role === "user"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">{m.content}</p>
-                    </div>
-                  </div>
-                  {m.role === "user" && (
-                    <div className="flex-shrink-0 w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex gap-3 justify-start"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">AI is typing...</span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Input Form */}
-            <form
-              className="flex gap-2 p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-xl"
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage();
-              }}
-            >
-              <textarea
-                ref={inputRef}
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={1}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask me anything..."
-                disabled={loading}
-                style={{ minHeight: "40px", maxHeight: "120px" }}
-              />
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                disabled={loading || !input.trim()}
-                aria-label="Send message"
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
-              </button>
-            </form>
-          </motion.div>
+              {message.content}
+            </p>
+            {message.role === "user" && (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-200">
+                <User className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <Loader2 className="h-4 w-4 animate-spin text-brand-600" /> Thinking…
+          </div>
         )}
-      </AnimatePresence>
-    </>
+        {messages.length === 1 && !loading && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {SUGGESTIONS.map((suggestion) => (
+              <button key={suggestion} type="button" onClick={() => sendMessage(suggestion)} className="chip">
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <form
+        className="flex items-end gap-2 border-t border-zinc-200 p-3 dark:border-zinc-800"
+        onSubmit={(event) => {
+          event.preventDefault();
+          sendMessage();
+        }}
+      >
+        <textarea
+          ref={inputRef}
+          className="input max-h-28 min-h-11 resize-none py-2.5"
+          rows={1}
+          value={input}
+          maxLength={MAX_INPUT}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              sendMessage();
+            }
+          }}
+          placeholder="Ask me anything…"
+          aria-label="Your message"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+          disabled={loading || !input.trim()}
+          aria-label="Send message"
+        >
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4" />}
+        </button>
+      </form>
+    </div>
   );
 }

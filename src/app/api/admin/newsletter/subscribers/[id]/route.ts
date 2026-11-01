@@ -1,61 +1,51 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import mongoose, { Schema, models, model } from 'mongoose';
+import NewsletterSubscriber from '@/models/NewsletterSubscriber';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, cleanString, cleanStringArray, isObjectId, readJsonBody, serverError } from '@/lib/security';
 
-// Newsletter Subscriber Schema
-const NewsletterSubscriberSchema = new Schema({
-  email: { type: String, required: true, unique: true },
-  name: { type: String },
-  subscribed: { type: Boolean, default: true },
-  subscribedAt: { type: Date, default: Date.now },
-  lastEmailSent: { type: Date },
-  tags: [{ type: String }],
-  source: { type: String }
-});
+type RouteContext = { params: Promise<{ id: string }> };
+const notFound = () => NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
 
-const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSubscriber', NewsletterSubscriberSchema);
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
+export async function DELETE(req: Request, { params }: RouteContext) {
   try {
-    const subscriber = await NewsletterSubscriber.findByIdAndDelete(params.id);
-    if (!subscriber) {
-      return NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
-    }
-    
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    const { id } = await params;
+    if (!isObjectId(id)) return badRequest('Invalid ID');
+
+    await dbConnect();
+    const subscriber = await NewsletterSubscriber.findByIdAndDelete(id);
+    if (!subscriber) return notFound();
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting subscriber:', error);
-    return NextResponse.json({ error: 'Failed to delete subscriber' }, { status: 500 });
+    return serverError('Error deleting subscriber', error, 'Failed to delete subscriber');
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
+export async function PATCH(req: Request, { params }: RouteContext) {
   try {
-    const updates = await req.json();
-    const subscriber = await NewsletterSubscriber.findByIdAndUpdate(params.id, updates, { new: true });
-    
-    if (!subscriber) {
-      return NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
-    }
-    
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    const { id } = await params;
+    if (!isObjectId(id)) return badRequest('Invalid ID');
+
+    const body = await readJsonBody(req, 8 * 1024);
+    if (!body) return badRequest();
+
+    const updates: Record<string, unknown> = {};
+    if ('name' in body) updates.name = cleanString(body.name, 100);
+    if ('tags' in body) updates.tags = cleanStringArray(body.tags, 10, 50);
+    if (typeof body.subscribed === 'boolean') updates.subscribed = body.subscribed;
+    if (!Object.keys(updates).length) return badRequest('No valid fields to update');
+
+    await dbConnect();
+    const subscriber = await NewsletterSubscriber.findByIdAndUpdate(id, { $set: updates }, { new: true });
+    if (!subscriber) return notFound();
     return NextResponse.json(subscriber);
   } catch (error) {
-    console.error('Error updating subscriber:', error);
-    return NextResponse.json({ error: 'Failed to update subscriber' }, { status: 500 });
+    return serverError('Error updating subscriber', error, 'Failed to update subscriber');
   }
-} 
+}

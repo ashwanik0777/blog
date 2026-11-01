@@ -48,7 +48,7 @@ const BlogSchema = new Schema<IBlog>({
   publishedAt: { type: Date },
   views: { type: Number, default: 0 },
   viewsByDay: { type: Object, default: {} },
-  status: { type: String, enum: ['pending', 'approved', 'rejected', 'flagged'], default: 'approved' },
+  status: { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'flagged'], default: 'approved' },
   flaggedReason: { type: String },
   moderationNotes: { type: String },
   readingTime: { type: Number },
@@ -69,5 +69,6 @@ BlogSchema.index({ featured: 1, publishedAt: -1 });
 BlogSchema.index({ tags: 1 });
 BlogSchema.index({ categories: 1 });
 BlogSchema.index({ status: 1, createdAt: -1 });
+BlogSchema.index({ published: 1, categories: 1, publishedAt: -1 });
 
 export default models.Blog || model<IBlog>('Blog', BlogSchema);

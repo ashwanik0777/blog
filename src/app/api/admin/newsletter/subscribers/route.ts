@@ -1,70 +1,75 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import mongoose, { Schema, models, model } from 'mongoose';
+import Newsletter from '@/models/Newsletter';
+import NewsletterSubscriber from '@/models/NewsletterSubscriber';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, cleanString, cleanStringArray, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
 
-// Newsletter Subscriber Schema
-const NewsletterSubscriberSchema = new Schema({
-  email: { type: String, required: true, unique: true },
-  name: { type: String },
-  subscribed: { type: Boolean, default: true },
-  subscribedAt: { type: Date, default: Date.now },
-  lastEmailSent: { type: Date },
-  tags: [{ type: String }],
-  source: { type: String }
-});
+/**
+ * The public signup form used to save emails into the campaigns collection
+ * (both models were registered as "Newsletter"). Move any such records into
+ * the subscribers collection. Idempotent and cheap once the data is clean.
+ */
+async function migrateMisplacedSubscribers() {
+  const misplaced = await Newsletter.collection
+    .find({ email: { $exists: true }, subject: { $exists: false } })
+    .limit(1000)
+    .toArray();
+  if (!misplaced.length) return;
 
-const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSubscriber', NewsletterSubscriberSchema);
+  for (const doc of misplaced) {
+    const email = normalizeEmail(doc.email);
+    if (email) {
+      await NewsletterSubscriber.updateOne(
+        { email },
+        { $setOnInsert: { email, subscribed: true, subscribedAt: doc.subscribedAt || new Date(), source: 'website' } },
+        { upsert: true }
+      );
+    }
+    await Newsletter.collection.deleteOne({ _id: doc._id });
+  }
+}
 
 export async function GET(req: Request) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
   try {
-    const subscribers = await NewsletterSubscriber.find()
-      .sort({ subscribedAt: -1 });
-    
-    return NextResponse.json({ subscribers });
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    await dbConnect();
+    await migrateMisplacedSubscribers();
+    const subscribers = await NewsletterSubscriber.find().sort({ subscribedAt: -1 }).limit(5000).lean();
+
+    return NextResponse.json({ subscribers }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    console.error('Error fetching subscribers:', error);
-    return NextResponse.json({ error: 'Failed to fetch subscribers' }, { status: 500 });
+    return serverError('Error fetching subscribers', error, 'Failed to fetch subscribers');
   }
 }
 
 export async function POST(req: Request) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
   try {
-    const { email, name, tags, source } = await req.json();
-    
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
-    }
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
 
-    const existing = await NewsletterSubscriber.findOne({ email });
-    if (existing) {
-      return NextResponse.json({ error: 'Email already subscribed' }, { status: 400 });
+    const body = await readJsonBody(req, 8 * 1024);
+    if (!body) return badRequest();
+
+    const email = normalizeEmail(body.email);
+    if (!email) return badRequest('Invalid email');
+
+    await dbConnect();
+    if (await NewsletterSubscriber.exists({ email })) {
+      return badRequest('Email already subscribed');
     }
 
     const subscriber = await NewsletterSubscriber.create({
       email,
-      name,
-      tags: tags || [],
-      source: source || 'admin'
+      name: cleanString(body.name, 100) || undefined,
+      tags: cleanStringArray(body.tags, 10, 50),
+      source: cleanString(body.source, 50) || 'admin',
     });
 
     return NextResponse.json(subscriber);
   } catch (error) {
-    console.error('Error creating subscriber:', error);
-    return NextResponse.json({ error: 'Failed to create subscriber' }, { status: 500 });
+    return serverError('Error creating subscriber', error, 'Failed to create subscriber');
   }
-} 
+}

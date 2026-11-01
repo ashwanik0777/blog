@@ -1,96 +1,94 @@
 "use client";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 
-export default function NewsletterForm() {
+export default function NewsletterForm({ variant = "default" }: { variant?: "default" | "inverted" }) {
   const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [shake, setShake] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
     setLoading(true);
     setSuccess("");
     setError("");
-    setShake(false);
-    const res = await fetch("/api/newsletter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    if (res.ok) {
-      setSuccess("Subscribed! Check your inbox.");
-      setEmail("");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Subscription failed");
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, website }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSuccess(data.message || "You're subscribed!");
+        setEmail("");
+      } else {
+        setError(data.error || "Subscription failed. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
+  const inverted = variant === "inverted";
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 items-center max-w-md mx-auto mt-4">
-      <motion.input
-        type="email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="Your email address"
-        className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-        required
-        disabled={loading}
-        animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : { x: 0 }}
-        transition={{ duration: 0.5 }}
-      />
-      <motion.button
-        type="submit"
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
-        whileHover={{ scale: 1.05, boxShadow: "0 0 0 4px #2563eb22" }}
-        whileTap={{ scale: 0.98 }}
-        disabled={loading}
+    <form onSubmit={handleSubmit} className="w-full" noValidate>
+      <div
+        className={`flex flex-col gap-2 rounded-2xl p-1.5 sm:flex-row ${
+          inverted ? "bg-white/10 ring-1 ring-white/20 backdrop-blur" : "bg-white ring-1 ring-zinc-200 shadow-sm dark:bg-zinc-900 dark:ring-zinc-800"
+        }`}
       >
-        {loading ? (
-          <span className="animate-spin">⏳</span>
-        ) : success ? (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className="text-lg"
-          >
-            ✅
-          </motion.span>
-        ) : (
-          "Subscribe"
-        )}
-      </motion.button>
-      <AnimatePresence>
+        <label htmlFor={`newsletter-${variant}`} className="sr-only">
+          Email address
+        </label>
+        <input
+          id={`newsletter-${variant}`}
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+          maxLength={254}
+          disabled={loading}
+          className={`min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm focus:outline-none ${
+            inverted ? "text-white placeholder-white/60" : "text-zinc-900 placeholder-zinc-400 dark:text-white"
+          }`}
+        />
+        {/* Honeypot — hidden from humans */}
+        <input
+          type="text"
+          name="website"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+        />
+        <button
+          type="submit"
+          disabled={loading || !email}
+          className={`btn shrink-0 py-3 ${
+            inverted ? "bg-white text-zinc-900 hover:bg-zinc-100" : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
+          }`}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Subscribe <ArrowRight className="h-4 w-4" /></>}
+        </button>
+      </div>
+      <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm">
         {success && (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-green-600 dark:text-green-400 text-sm font-medium mt-3 w-full text-center"
-          >
-            {success}
-          </motion.div>
+          <span className={`inline-flex items-center gap-1.5 font-medium ${inverted ? "text-emerald-200" : "text-emerald-600 dark:text-emerald-400"}`}>
+            <CheckCircle2 className="h-4 w-4" /> {success}
+          </span>
         )}
-        {error && (
-          <motion.div
-            key="error"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-red-600 dark:text-red-400 text-sm font-medium mt-3 w-full text-center"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {error && <span className={inverted ? "text-rose-200" : "text-rose-600 dark:text-rose-400"}>{error}</span>}
+      </p>
     </form>
   );
-} 
+}

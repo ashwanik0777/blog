@@ -1,15 +1,12 @@
 "use client";
-import NotificationProvider from "@/components/NotificationProvider";
-import Chatbot from "@/components/Chatbot";
+import ChatbotLauncher from "@/components/ChatbotLauncher";
 import { ThemeProvider } from "next-themes";
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <NotificationProvider>
-        {children}
-        <Chatbot />
-      </NotificationProvider>
+      {children}
+      <ChatbotLauncher />
     </ThemeProvider>
   );
-} 
+}

@@ -2,24 +2,29 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+const SESSION_KEY = "visitor-session-id";
+
 export default function VisitorTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Skip tracking for admin pages
-    if (pathname?.startsWith('/admin')) return;
+    if (!pathname || pathname.startsWith("/admin")) return;
 
-    const sessionId = sessionStorage.getItem('visitor-session-id') || 
-                     `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('visitor-session-id', sessionId);
+    let sessionId = "";
+    try {
+      sessionId = sessionStorage.getItem(SESSION_KEY) || crypto.randomUUID();
+      sessionStorage.setItem(SESSION_KEY, sessionId);
+    } catch {
+      // Storage can be unavailable (private mode); the server falls back to a random id.
+    }
 
-    fetch('/api/visitors', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/api/visitors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: pathname, sessionId }),
-    }).catch(err => console.error('Visitor tracking error:', err));
+      keepalive: true,
+    }).catch(() => {});
   }, [pathname]);
 
   return null;
 }
-

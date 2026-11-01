@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/lib/adminAuth';
-import { extractJson, geminiGenerateText } from '@/lib/gemini';
+import { moderateText } from '@/lib/gemini';
+import { badRequest, limitRequest, readJsonBody, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
-  const { errorResponse } = requirePermission(req, 'ai_content_generation');
-  if (errorResponse) {
-    return errorResponse;
-  }
-  const { content } = await req.json();
-  if (!content) {
-    return NextResponse.json({ error: 'Missing content' }, { status: 400 });
-  }
-  const prompt = `Moderate the following blog content. Return ONLY valid JSON: { "verdict": "safe"|"flagged"|"needs review", "reason": string }.\nContent:\n${content}`;
+  const { user, errorResponse } = await requirePermission(req, 'ai_content_generation');
+  if (errorResponse || !user) return errorResponse;
+
+  const limited = limitRequest(req, 'ai', 40, 10 * 60 * 1000, user.id);
+  if (limited) return limited;
+
+  const body = await readJsonBody(req, 512 * 1024);
+  const content = typeof body?.content === 'string' ? body.content : '';
+  if (!content.trim()) return badRequest('Missing content');
+
   try {
-    const text = await geminiGenerateText(prompt);
-    const result = extractJson(text, { verdict: 'safe', reason: '' });
-    return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Gemini API error' }, { status: 500 });
+    return NextResponse.json(await moderateText(content));
+  } catch (error) {
+    return serverError('Moderation error', error, 'AI service is temporarily unavailable');
   }
-} 
+}

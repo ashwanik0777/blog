@@ -2,62 +2,57 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Issue from '@/models/Issue';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, cleanString, isObjectId, readJsonBody, serverError } from '@/lib/security';
+
+const STATUSES = ['pending', 'resolved', 'closed'];
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { user, errorResponse } = requirePermission(req, 'manage_issues');
-    if (errorResponse || !user) {
-      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { user, errorResponse } = await requirePermission(req, 'manage_issues');
+    if (errorResponse || !user) return errorResponse;
+
+    const { id } = await params;
+    if (!isObjectId(id)) return badRequest('Invalid ID');
+
+    const body = await readJsonBody(req, 16 * 1024);
+    if (!body) return badRequest();
+
+    const updateData: Record<string, unknown> = {};
+    if (typeof body.status === 'string') {
+      if (!STATUSES.includes(body.status)) return badRequest('Invalid status');
+      updateData.status = body.status;
+      if (body.status === 'resolved' || body.status === 'closed') {
+        updateData.resolvedAt = new Date();
+        updateData.resolvedBy = user.id;
+      }
     }
+    if (body.adminNotes !== undefined) updateData.adminNotes = cleanString(body.adminNotes, 5000);
+    if (!Object.keys(updateData).length) return badRequest('No valid fields to update');
 
     await dbConnect();
-    const { id } = await params;
-    const { status, adminNotes } = await req.json();
-
-    const updateData: any = {};
-    if (status) updateData.status = status;
-    if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
-    if (status === 'resolved' || status === 'closed') {
-      updateData.resolvedAt = new Date();
-      updateData.resolvedBy = user.id;
-    }
-
-    const issue = await Issue.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    ).populate('resolvedBy', 'name email');
-
+    const issue = await Issue.findByIdAndUpdate(id, { $set: updateData }, { new: true }).populate('resolvedBy', 'name email');
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, issue });
-  } catch (error: any) {
-    console.error('Issue update error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to update issue' 
-    }, { status: 500 });
+  } catch (error) {
+    return serverError('Issue update error', error, 'Failed to update issue');
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { errorResponse } = requirePermission(req, 'manage_issues');
-    if (errorResponse) {
-      return errorResponse;
-    }
+    const { errorResponse } = await requirePermission(req, 'manage_issues');
+    if (errorResponse) return errorResponse;
+
+    const { id } = await params;
+    if (!isObjectId(id)) return badRequest('Invalid ID');
 
     await dbConnect();
-    const { id } = await params;
     await Issue.findByIdAndDelete(id);
-
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Issue delete error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to delete issue' 
-    }, { status: 500 });
+  } catch (error) {
+    return serverError('Issue delete error', error, 'Failed to delete issue');
   }
 }
-

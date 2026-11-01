@@ -1,8 +1,10 @@
 "use client";
+import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Twitter, Facebook, Linkedin, Github, Instagram, Youtube, Palette, Code } from "lucide-react";
+import MaintenancePanel from "@/components/admin/MaintenancePanel";
+import { Lock, Twitter, Facebook, Linkedin, Github, Instagram, Youtube, Palette } from "lucide-react";
 
 interface WebsiteSettings {
   enableChatbot: boolean;
@@ -32,7 +34,7 @@ interface WebsiteSettings {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [settings, setSettings] = useState<WebsiteSettings>({
     enableChatbot: true,
@@ -86,7 +88,7 @@ export default function SettingsPage() {
         } else {
           router.push('/admin');
         }
-      } catch (error) {
+      } catch {
         router.push('/admin');
       } finally {
         setCheckingAuth(false);
@@ -121,7 +123,7 @@ export default function SettingsPage() {
   if (checkingAuth || fetching) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
       </div>
     );
   }
@@ -135,16 +137,16 @@ export default function SettingsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
               Website Settings
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-zinc-600 dark:text-zinc-300">
               Configure website features and settings
             </p>
           </div>
           <Link
             href="/admin/dashboard/settings/password"
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors font-medium"
           >
             <Lock className="h-4 w-4" />
             Update Password
@@ -152,11 +154,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
         <div className="space-y-6">
           {/* Feature Toggles */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
               Feature Controls
             </h3>
             <div className="space-y-4">
@@ -167,10 +169,10 @@ export default function SettingsPage() {
                 { key: 'enableNewsletter', label: 'Newsletter', description: 'Enable newsletter subscription' },
                 { key: 'enableAnalytics', label: 'Analytics', description: 'Enable website analytics tracking' }
               ].map((feature) => (
-                <div key={feature.key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div key={feature.key} className="flex items-center justify-between p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg">
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{feature.label}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{feature.description}</div>
+                    <div className="font-medium text-zinc-900 dark:text-white">{feature.label}</div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">{feature.description}</div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -182,7 +184,7 @@ export default function SettingsPage() {
                       }))}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-brand-600"></div>
                   </label>
                 </div>
               ))}
@@ -191,30 +193,30 @@ export default function SettingsPage() {
 
           {/* Website Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
               Website Information
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Site Name
                 </label>
                 <input
                   type="text"
                   value={settings.siteName}
                   onChange={(e) => setSettings(prev => ({ ...prev, siteName: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Site Description
                 </label>
                 <textarea
                   value={settings.siteDescription}
                   onChange={(e) => setSettings(prev => ({ ...prev, siteDescription: e.target.value }))}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -222,16 +224,16 @@ export default function SettingsPage() {
 
           {/* Social Media Links */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Twitter className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+              <Twitter className="h-5 w-5 text-brand-500" />
               Social Media Links
             </h3>
             <div className="space-y-4">
               {[
-                { key: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'text-blue-400' },
-                { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-600' },
-                { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
-                { key: 'github', label: 'GitHub', icon: Github, color: 'text-gray-800 dark:text-gray-200' },
+                { key: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'text-brand-400' },
+                { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-brand-600' },
+                { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-brand-700' },
+                { key: 'github', label: 'GitHub', icon: Github, color: 'text-zinc-800 dark:text-zinc-200' },
                 { key: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
                 { key: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
               ].map((social) => {
@@ -250,7 +252,7 @@ export default function SettingsPage() {
                           [social.key]: e.target.value
                         }
                       }))}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                   </div>
                 );
@@ -260,14 +262,14 @@ export default function SettingsPage() {
 
           {/* Design & Developed By */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
               Footer Credits
             </h3>
             <div className="space-y-4">
-              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <Palette className="h-5 w-5 text-purple-500" />
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     Design & Developed By
                   </label>
                 </div>
@@ -280,7 +282,7 @@ export default function SettingsPage() {
                       ...prev,
                       designBy: { ...prev.designBy, name: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                   <input
                     type="url"
@@ -290,7 +292,7 @@ export default function SettingsPage() {
                       ...prev,
                       designBy: { ...prev.designBy, portfolioUrl: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -302,11 +304,13 @@ export default function SettingsPage() {
             <button
               onClick={handleSaveSettings}
               disabled={loading}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+              className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
             >
               {loading ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
+
+          {adminUser?.role === 'admin' && <MaintenancePanel />}
         </div>
       </div>
     </div>

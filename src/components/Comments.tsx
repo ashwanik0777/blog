@@ -1,263 +1,199 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, User, Clock } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Loader2, MessageCircle, Send } from "lucide-react";
+import { formatDate } from "@/lib/site";
 
 interface Comment {
   _id: string;
   content: string;
   authorName: string;
-  authorEmail?: string;
   createdAt: string;
-  status: 'pending' | 'approved' | 'flagged' | 'rejected';
+  status: "pending" | "approved" | "flagged" | "rejected";
 }
 
-interface CommentsProps {
-  blogId: string;
-}
+const MAX_LENGTH = 2000;
 
-export default function Comments({ blogId }: CommentsProps) {
+export default function Comments({ blogId }: { blogId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [authorEmail, setAuthorEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState("");
+  const [authorName, setAuthorName] = useState("");
+  const [authorEmail, setAuthorEmail] = useState("");
+  const [website, setWebsite] = useState("");
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    fetchComments();
+    let active = true;
+    fetch(`/api/comments?blogId=${encodeURIComponent(blogId)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (active && data) setComments(data.comments || []);
+      })
+      // Comments are non-critical; keep the page usable.
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [blogId]);
 
-  async function fetchComments() {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/comments?blogId=${blogId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data.comments || []);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleSubmitComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newComment.trim() || !authorName.trim()) {
-      setError('Please fill in your name and comment');
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!content.trim() || !authorName.trim()) {
+      setError("Please add your name and a comment.");
       return;
     }
 
     setSubmitting(true);
-    setError('');
-
+    setError("");
+    setNotice("");
     try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           blogId,
-          content: newComment.trim(),
+          content: content.trim(),
           authorName: authorName.trim(),
           authorEmail: authorEmail.trim() || undefined,
+          website,
         }),
       });
+      const data = await response.json().catch(() => ({}));
 
-      if (response.ok) {
-        const comment = await response.json();
-        setComments([comment, ...comments]);
-        setNewComment('');
-        setAuthorName('');
-        setAuthorEmail('');
-        setShowForm(false);
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to post comment');
+      if (!response.ok) {
+        setError(data.error || "Failed to post comment");
+        return;
       }
-    } catch (error) {
-      setError('Error posting comment');
+
+      setContent("");
+      if (data.status === "approved") {
+        setComments((current) => [data as Comment, ...current]);
+        setNotice("Thanks! Your comment is live.");
+      } else {
+        setNotice("Thanks! Your comment will appear after a quick review.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  if (loading) {
-    return (
-      <div className="mt-12">
-        <div className="flex items-center gap-2 mb-6">
-          <MessageCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Comments</h3>
-        </div>
-        <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-gray-100 dark:bg-gray-800 h-20 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-12">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Comments ({comments.length})
-          </h3>
+    <section aria-labelledby="comments-heading">
+      <h2 id="comments-heading" className="flex items-center gap-2 text-2xl font-bold text-zinc-900 dark:text-white">
+        <MessageCircle className="h-6 w-6 text-brand-600" /> Discussion
+        <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-sm font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          {comments.length}
+        </span>
+      </h2>
+
+      <form onSubmit={handleSubmit} className="card mt-6 space-y-4 p-5 sm:p-6" noValidate>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="comment-name" className="label">
+              Name *
+            </label>
+            <input
+              id="comment-name"
+              type="text"
+              value={authorName}
+              onChange={(event) => setAuthorName(event.target.value)}
+              className="input"
+              placeholder="Your name"
+              maxLength={60}
+              autoComplete="name"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="comment-email" className="label">
+              Email <span className="font-normal text-zinc-400">(optional, never shown)</span>
+            </label>
+            <input
+              id="comment-email"
+              type="email"
+              value={authorEmail}
+              onChange={(event) => setAuthorEmail(event.target.value)}
+              className="input"
+              placeholder="you@example.com"
+              maxLength={254}
+              autoComplete="email"
+            />
+          </div>
         </div>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Add Comment
+        <div>
+          <label htmlFor="comment-content" className="label">
+            Comment *
+          </label>
+          <textarea
+            id="comment-content"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Share your thoughts or ask a question…"
+            className="input resize-y"
+            rows={4}
+            maxLength={MAX_LENGTH}
+            disabled={submitting}
+            required
+          />
+          <p className="mt-1 text-right text-xs text-zinc-400">
+            {content.length}/{MAX_LENGTH}
+          </p>
+        </div>
+        <input
+          type="text"
+          name="website"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+        />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p role="status" aria-live="polite" className="text-sm">
+            {error && <span className="text-rose-600 dark:text-rose-400">{error}</span>}
+            {notice && <span className="text-emerald-600 dark:text-emerald-400">{notice}</span>}
+          </p>
+          <button type="submit" disabled={submitting || !content.trim() || !authorName.trim()} className="btn-primary">
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Post comment
           </button>
+        </div>
+      </form>
+
+      <div className="mt-8 space-y-4">
+        {loading ? (
+          Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900" />)
+        ) : comments.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            No comments yet — start the conversation!
+          </p>
+        ) : (
+          comments.map((comment) => (
+            <article key={comment._id} className="flex gap-4 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/60 font-semibold text-brand-700 dark:text-brand-200">
+                {comment.authorName.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <p className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-semibold text-zinc-900 dark:text-white">{comment.authorName}</span>
+                  <time dateTime={comment.createdAt} className="text-xs text-zinc-500">
+                    {formatDate(comment.createdAt)}
+                  </time>
+                </p>
+                <p className="mt-1.5 whitespace-pre-line break-words leading-7 text-zinc-700 dark:text-zinc-300">{comment.content}</p>
+              </div>
+            </article>
+          ))
         )}
       </div>
-
-      {/* Comment Form */}
-      {showForm && (
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          onSubmit={handleSubmitComment}
-          className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6"
-        >
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Leave a Comment</h4>
-          <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Your Name *
-                </label>
-                <input
-                  type="text"
-                  value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  value={authorEmail}
-                  onChange={(e) => setAuthorEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="your@email.com"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Your Comment *
-              </label>
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write your comment here..."
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                rows={4}
-                disabled={submitting}
-                required
-              />
-            </div>
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={!newComment.trim() || !authorName.trim() || submitting}
-                className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                {submitting ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                Post Comment
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setError('');
-                  setNewComment('');
-                  setAuthorName('');
-                  setAuthorEmail('');
-                }}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </motion.form>
-      )}
-
-      {/* Comments List */}
-      <div className="space-y-6">
-        <AnimatePresence>
-          {comments.filter(c => c.status === 'approved').map((comment) => (
-            <motion.div
-              key={comment._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6"
-            >
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {comment.authorName}
-                  </span>
-                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">
-                      {formatDate(comment.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{comment.content}</p>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {comments.filter(c => c.status === 'approved').length === 0 && (
-          <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No comments yet. Be the first to comment!</p>
-          </div>
-        )}
-      </div>
-    </div>
+    </section>
   );
 }

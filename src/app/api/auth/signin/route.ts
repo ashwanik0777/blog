@@ -1,62 +1,73 @@
 import { NextResponse } from 'next/server';
+import { createHash, timingSafeEqual } from 'crypto';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { createAdminSessionToken } from '@/lib/adminAuth';
-import { setAdminSessionCookie } from '@/lib/adminAuth';
+import { ALL_PERMISSIONS, createAdminSessionToken, setAdminSessionCookie } from '@/lib/adminAuth';
+import { badRequest, cleanString, limitRequest, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
+
+// Used to keep response times similar when the account does not exist.
+const DUMMY_HASH = '$2b$12$9FGGAz6ZavRc6Q6K7D3yX.dWwsJcFcexinlR..g4KqYimHm3uIc3q';
+
+function safeEqual(a: string, b: string) {
+  const left = createHash('sha256').update(a).digest();
+  const right = createHash('sha256').update(b).digest();
+  return timingSafeEqual(left, right);
+}
+
+const invalidCredentials = () => NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const limited = limitRequest(req, 'signin', 5, 15 * 60 * 1000);
+    if (limited) return limited;
 
+    const body = await readJsonBody(req, 4 * 1024);
+    if (!body) return badRequest();
+
+    const email = normalizeEmail(body.email);
+    const password = cleanString(body.password, 200);
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      return badRequest('Email and password are required');
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@in.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-    const normalizedEmail = String(email).toLowerCase();
+    const perAccount = limitRequest(req, 'signin-account', 10, 60 * 60 * 1000, email);
+    if (perAccount) return perAccount;
 
     await dbConnect();
 
     let staffUser = await User.findOne({
-      email: normalizedEmail,
+      email,
       role: { $in: ['admin', 'sub-admin', 'editor'] },
     }).select('_id name email password role permissions disabled');
 
     if (staffUser) {
+      const isValid = await bcrypt.compare(password, staffUser.password || DUMMY_HASH);
+      if (!isValid || !staffUser.password) return invalidCredentials();
       if (staffUser.disabled) {
-        return NextResponse.json({ error: 'Account disabled' }, { status: 403 });
-      }
-
-      if (!staffUser.password) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-      }
-
-      const isValid = await bcrypt.compare(password, staffUser.password);
-      if (!isValid) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+        return NextResponse.json({ error: 'This account has been disabled' }, { status: 403 });
       }
     } else {
-      if (normalizedEmail !== adminEmail.toLowerCase() || password !== adminPassword) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-      }
+      await bcrypt.compare(password, DUMMY_HASH);
 
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      // First-run bootstrap: only allowed while no admin exists in the database.
+      const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL);
+      const adminPassword = process.env.ADMIN_PASSWORD || '';
+      const canBootstrap =
+        adminEmail &&
+        adminPassword.length >= 8 &&
+        email === adminEmail &&
+        safeEqual(password, adminPassword) &&
+        (await User.countDocuments({ role: 'admin' })) === 0;
+
+      if (!canBootstrap) return invalidCredentials();
+
       staffUser = await User.create({
         name: process.env.ADMIN_NAME || 'Admin',
         email: adminEmail,
-        password: hashedPassword,
+        password: await bcrypt.hash(adminPassword, 12),
         role: 'admin',
-        permissions: [
-          'manage_blogs',
-          'manage_users',
-          'manage_newsletter',
-          'view_analytics',
-          'ai_content_generation',
-          'manage_settings',
-          'manage_issues',
-        ],
+        permissions: [...ALL_PERMISSIONS],
         emailVerified: new Date(),
         disabled: false,
       });
@@ -67,7 +78,6 @@ export async function POST(req: Request) {
       email: staffUser.email,
       name: staffUser.name,
       role: staffUser.role,
-      permissions: staffUser.permissions || [],
     });
 
     const response = NextResponse.json({
@@ -82,9 +92,9 @@ export async function POST(req: Request) {
     });
 
     setAdminSessionCookie(response, token);
+    response.headers.set('Cache-Control', 'no-store');
     return response;
   } catch (error) {
-    console.error('Signin check error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return serverError('Signin error', error);
   }
 }

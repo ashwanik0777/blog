@@ -1,4 +1,5 @@
 "use client";
+import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -14,8 +15,7 @@ import {
   CheckCircle,
   XCircle,
   Calendar,
-  Tag,
-  User
+  Tag
 } from "lucide-react";
 
 interface Blog {
@@ -38,7 +38,7 @@ interface Blog {
 
 export default function BlogManagementPage() {
   const router = useRouter();
-  const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,27 +46,6 @@ export default function BlogManagementPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showEditor, setShowEditor] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
-
-  // Check if user is admin
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const response = await fetch('/api/auth/admin-session');
-        if (response.ok) {
-          const data = await response.json();
-          setAdminUser(data.user);
-          fetchBlogs();
-        } else {
-          router.push('/admin');
-        }
-      } catch (error) {
-        router.push('/admin');
-      } finally {
-        setCheckingAuth(false);
-      }
-    }
-    checkAuth();
-  }, [router]);
 
   async function fetchBlogs() {
     try {
@@ -79,6 +58,28 @@ export default function BlogManagementPage() {
       setLoading(false);
     }
   }
+  // Check if user is admin
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/admin-session');
+        if (response.ok) {
+          const data = await response.json();
+          setAdminUser(data.user);
+          fetchBlogs();
+        } else {
+          router.push('/admin');
+        }
+      } catch {
+        router.push('/admin');
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+    checkAuth();
+  }, [router]);
+
+
 
   async function handleDelete(blogId: string) {
     if (!confirm('Are you sure you want to delete this blog?')) return;
@@ -185,7 +186,7 @@ export default function BlogManagementPage() {
   // Filter blogs
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         blog.slug.toLowerCase().includes(searchTerm.toLowerCase());
+                         (blog.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || blog.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -193,7 +194,7 @@ export default function BlogManagementPage() {
   if (checkingAuth) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
       </div>
     );
   }
@@ -206,18 +207,18 @@ export default function BlogManagementPage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
               Blog Management
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-zinc-600 dark:text-zinc-300">
               Create, edit, and manage your blog posts
             </p>
           </div>
           <button
             onClick={handleCreateNew}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
+            className="bg-brand-600 text-white px-6 py-3 rounded-xl hover:bg-brand-700 transition-all duration-200 font-semibold flex items-center space-x-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             <span>Create New Blog</span>
@@ -230,15 +231,15 @@ export default function BlogManagementPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-200 dark:border-zinc-700"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Blogs</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{blogs.length}</p>
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Blogs</p>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-white">{blogs.length}</p>
             </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-3 bg-brand-100 dark:bg-brand-900/20 rounded-lg">
+              <FileText className="w-6 h-6 text-brand-600 dark:text-brand-400" />
             </div>
           </div>
         </motion.div>
@@ -247,11 +248,11 @@ export default function BlogManagementPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-200 dark:border-zinc-700"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Published</p>
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Published</p>
               <p className="text-3xl font-bold text-green-600">{blogs.filter(b => b.published).length}</p>
             </div>
             <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -264,11 +265,11 @@ export default function BlogManagementPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-200 dark:border-zinc-700"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Drafts</p>
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Drafts</p>
               <p className="text-3xl font-bold text-yellow-600">{blogs.filter(b => !b.published).length}</p>
             </div>
             <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
@@ -281,11 +282,11 @@ export default function BlogManagementPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+          className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-200 dark:border-zinc-700"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Views</p>
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Views</p>
               <p className="text-3xl font-bold text-purple-600">{blogs.reduce((sum, blog) => sum + (blog.views || 0), 0)}</p>
             </div>
             <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
@@ -296,24 +297,24 @@ export default function BlogManagementPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 mb-6 border border-zinc-200 dark:border-zinc-700">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search blogs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
             />
           </div>
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+              className="pl-10 pr-8 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent appearance-none cursor-pointer"
             >
               <option value="all">All Status</option>
               <option value="published">Published</option>
@@ -326,48 +327,48 @@ export default function BlogManagementPage() {
       </div>
 
       {/* Blogs Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">Loading blogs...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">Loading blogs...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+              <thead className="bg-zinc-50 dark:bg-zinc-700">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                     Blog Post
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                     Views
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
                 {filteredBlogs.map((blog) => (
                   <motion.tr
                     key={blog._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <div className="text-sm font-semibold text-zinc-900 dark:text-white">
                           {blog.title}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">
+                        <div className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center mt-1">
                           <Tag className="w-4 h-4 mr-1" />
                           {blog.tags.slice(0, 3).join(', ')}
                           {blog.tags.length > 3 && ` +${blog.tags.length - 3} more`}
@@ -382,18 +383,18 @@ export default function BlogManagementPage() {
                           ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                           : blog.status === 'flagged'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                          : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200'
                       }`}>
                         {blog.published ? 'Published' : blog.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                       <div className="flex items-center">
-                        <Eye className="w-4 h-4 mr-1 text-gray-400" />
+                        <Eye className="w-4 h-4 mr-1 text-zinc-400" />
                         {blog.views || 0}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
@@ -406,7 +407,7 @@ export default function BlogManagementPage() {
                             setEditingBlog(blog);
                             setShowEditor(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          className="text-brand-600 hover:text-brand-900 dark:hover:text-brand-400 p-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
                           title="Edit blog"
                         >
                           <Edit className="w-4 h-4" />
@@ -441,9 +442,9 @@ export default function BlogManagementPage() {
 
       {filteredBlogs.length === 0 && !loading && (
         <div className="text-center py-12">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 text-lg">No blogs found</p>
-          <p className="text-gray-400 dark:text-gray-500">Create your first blog to get started</p>
+          <FileText className="w-16 h-16 text-zinc-400 mx-auto mb-4" />
+          <p className="text-zinc-500 dark:text-zinc-400 text-lg">No blogs found</p>
+          <p className="text-zinc-400 dark:text-zinc-500">Create your first blog to get started</p>
         </div>
       )}
 

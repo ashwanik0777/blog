@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/lib/adminAuth';
 import { extractJson, geminiGenerateText } from '@/lib/gemini';
+import { badRequest, cleanString, limitRequest, readJsonBody, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
-  const { errorResponse } = requirePermission(req, 'ai_content_generation');
-  if (errorResponse) {
-    return errorResponse;
-  }
-  const { title, keywords } = await req.json();
+  const { user, errorResponse } = await requirePermission(req, 'ai_content_generation');
+  if (errorResponse || !user) return errorResponse;
+
+  const limited = limitRequest(req, 'ai-generate', 15, 10 * 60 * 1000, user.id);
+  if (limited) return limited;
+
+  const body = await readJsonBody(req, 16 * 1024);
+  const title = cleanString(body?.title, 200);
+  const keywords = cleanString(body?.keywords, 500);
   if (!title && !keywords) {
-    return NextResponse.json({ error: 'Missing title or keywords' }, { status: 400 });
+    return badRequest('Missing title or keywords');
   }
 
   const prompt = `You are a professional technical blog writer.
@@ -20,7 +25,7 @@ Return ONLY valid JSON (no markdown fences, no extra text).
 
 Input:
 Title: ${title}
-Keywords: ${keywords || ''}
+Keywords: ${keywords}
 
 Output JSON schema:
 {
@@ -38,23 +43,20 @@ Output JSON schema:
 
   try {
     const text = await geminiGenerateText(prompt);
-    const result = extractJson(
-      text,
-      {
-        content: text || '',
-        summary: '',
-        tags: [],
-        categories: [],
-        keywords: [],
-        seoTitle: '',
-        seoDescription: '',
-        readingTime: 1,
-        references: [],
-      }
-    );
+    const result = extractJson(text, {
+      content: text || '',
+      summary: '',
+      tags: [],
+      categories: [],
+      keywords: [],
+      seoTitle: '',
+      seoDescription: '',
+      readingTime: 1,
+      references: [],
+    });
 
     return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Gemini API error' }, { status: 500 });
+  } catch (error) {
+    return serverError('Generate blog error', error, 'AI service is temporarily unavailable');
   }
-} 
+}

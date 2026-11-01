@@ -1,417 +1,234 @@
 "use client";
-import React from "react";
-import { useState, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
-  FileText,
-  LineChart,
-  Newspaper,
-  Users,
-  FlaskConical,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Shield,
-  User,
-  Search,
-  Bell,
   AlertCircle,
+  ChevronsLeft,
+  ChevronsRight,
+  ExternalLink,
+  FileText,
+  FlaskConical,
+  LayoutDashboard,
+  LineChart,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Newspaper,
+  Settings,
+  Users,
+  X,
 } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface MenuItem {
-  id: string;
+  href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  children?: MenuItem[];
-  color: string;
   requiredPermission?: string;
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const MENU_ITEMS: MenuItem[] = [
+  { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/dashboard/blogs", label: "Blog posts", icon: FileText, requiredPermission: "manage_blogs" },
+  { href: "/admin/dashboard/comments", label: "Comments", icon: MessageSquare, requiredPermission: "manage_blogs" },
+  { href: "/admin/dashboard/analytics", label: "Analytics", icon: LineChart, requiredPermission: "view_analytics" },
+  { href: "/admin/dashboard/newsletter", label: "Newsletter", icon: Newspaper, requiredPermission: "manage_newsletter" },
+  { href: "/admin/dashboard/ai-content", label: "AI studio", icon: FlaskConical, requiredPermission: "ai_content_generation" },
+  { href: "/admin/dashboard/users", label: "Staff", icon: Users, requiredPermission: "manage_users" },
+  { href: "/admin/dashboard/issues", label: "Reported issues", icon: AlertCircle, requiredPermission: "manage_issues" },
+  { href: "/admin/dashboard/settings", label: "Settings", icon: Settings, requiredPermission: "manage_settings" },
+];
+
+const ROLE_LABELS = { admin: "Administrator", "sub-admin": "Sub admin", editor: "Editor" } as const;
+
+type StaffInfo = {
+  name: string;
+  role: keyof typeof ROLE_LABELS;
+  permissions: string[];
+};
+
+function isActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return href === "/admin/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [collapsedDropdown, setCollapsedDropdown] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const [isDark, setIsDark] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [userInfo, setUserInfo] = useState<{
-    name: string;
-    role: "admin" | "sub-admin" | "editor";
-    permissions: string[];
-    avatar?: string;
-  }>({
-    name: "Staff",
-    role: "admin",
-    permissions: [],
-  });
-  const [authChecked, setAuthChecked] = useState(false);
-
-  // Check system theme
-  useEffect(() => {
-    const checkTheme = () => {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setIsDark(true);
-      } else {
-        setIsDark(false);
-      }
-    };
-    
-    checkTheme();
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', checkTheme);
-    
-    return () => mediaQuery.removeEventListener('change', checkTheme);
-  }, []);
-
-  // Menu structure with colors for each icon
-  const menuItems: MenuItem[] = [
-    {
-      id: "/",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      color: "text-purple-400",
-    },
-    {
-      id: "blogs",
-      label: "Blog Management",
-      icon: FileText,
-      color: "text-blue-400",
-      requiredPermission: "manage_blogs",
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: LineChart,
-      color: "text-green-400",
-      requiredPermission: "view_analytics",
-    },
-    {
-      id: "newsletter",
-      label: "Newsletter",
-      icon: Newspaper,
-      color: "text-orange-400",
-      requiredPermission: "manage_newsletter",
-    },
-    {
-      id: "users",
-      label: "Staff Management",
-      icon: Users,
-      color: "text-cyan-400",
-      requiredPermission: "manage_users",
-    },
-    {
-      id: "ai-content",
-      label: "AI Content",
-      icon: FlaskConical,
-      color: "text-yellow-400",
-      requiredPermission: "ai_content_generation",
-    },
-    {
-      id: "issues",
-      label: "Reported Issues",
-      icon: AlertCircle,
-      color: "text-red-400",
-      requiredPermission: "manage_issues",
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      color: "text-gray-400",
-      requiredPermission: "manage_settings",
-    },
-  ];
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [staff, setStaff] = useState<StaffInfo | null>(null);
 
   useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const response = await fetch('/api/auth/admin-session');
-        if (!response.ok) {
-          router.push('/admin');
-          return;
-        }
+    let active = true;
+    fetch("/api/auth/admin-session")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("No session");
         const data = await response.json();
-        setUserInfo({
-          name: data.user?.name || 'Staff',
-          role: data.user?.role || 'admin',
+        if (!active) return;
+        setStaff({
+          name: data.user?.name || "Staff",
+          role: data.user?.role || "editor",
           permissions: data.user?.permissions || [],
         });
-      } catch (error) {
-        router.push('/admin');
-      } finally {
-        setAuthChecked(true);
-      }
+      })
+      .catch(() => router.replace("/admin"));
+    return () => {
+      active = false;
     };
-
-    loadSession();
   }, [router]);
 
-  const hasPermission = (permission?: string) => {
-    if (!permission) return true;
-    if (userInfo.role === 'admin') return true;
-    return userInfo.permissions.includes(permission);
-  };
+  // Close the mobile drawer after navigating.
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  if (drawerPath !== pathname) {
+    setDrawerPath(pathname);
+    setMobileOpen(false);
+  }
+
+  const hasPermission = (permission?: string) =>
+    !permission || staff?.role === "admin" || Boolean(staff?.permissions.includes(permission));
+
+  const current = [...MENU_ITEMS].reverse().find((item) => isActive(pathname, item.href));
+  const forbidden = Boolean(staff && current?.requiredPermission && !hasPermission(current.requiredPermission));
 
   useEffect(() => {
-    if (!authChecked) return;
-    const current = menuItems.find((item) => pathname?.includes(`/admin/dashboard/${item.id}`));
-    if (current?.requiredPermission && !hasPermission(current.requiredPermission)) {
-      router.push('/admin/dashboard');
-    }
-  }, [authChecked, pathname]);
+    if (forbidden) router.replace("/admin/dashboard");
+  }, [forbidden, router]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node)
-      ) {
-        setCollapsedDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleCollapsedItemClick = (item: MenuItem, event: React.MouseEvent) => {
-    if (item.children && item.children.length > 0) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.top,
-        left: rect.right + 8,
-      });
-      setCollapsedDropdown(collapsedDropdown === item.id ? null : item.id);
-    } else {
-      router.push(`/admin/dashboard/${item.id}`);
-    }
-  };
-
-  const handleLogout = async () => {
+  async function handleLogout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      localStorage.clear();
-      router.push("/admin");
-    } catch (error) {
-      console.error("Error during logout:", error);
-      window.location.href = "/admin";
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      try {
+        localStorage.clear();
+      } catch {
+        // Storage may be unavailable.
+      }
+      router.replace("/admin");
     }
-  };
+  }
 
-  const getUserIcon = () => {
-    switch (userInfo.role) {
-      case "admin":
-        return Shield;
-      case "sub-admin":
-        return User;
-      case "editor":
-        return User;
-      default:
-        return User;
-    }
-  };
-
-  const getUserRoleText = () => {
-    switch (userInfo.role) {
-      case "admin":
-        return "Administrator";
-      case "sub-admin":
-        return "Sub Admin";
-      case "editor":
-        return "Editor";
-      default:
-        return "Staff";
-    }
-  };
-
-  const renderMenuItem = (item: MenuItem) => {
-    const isActive = pathname?.includes(`/admin/dashboard/${item.id}`);
-    const Icon = item.icon;
-
-    if (!hasPermission(item.requiredPermission)) {
-      return null;
-    }
-
-    if (sidebarCollapsed) {
-      return (
-        <button
-          key={item.id}
-          onClick={(e) => handleCollapsedItemClick(item, e)}
-          className={`w-full p-3 rounded-lg transition-all duration-200 ${
-            isActive
-              ? "bg-blue-600 text-white"
-              : "text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white"
-          }`}
-          title={item.label}
-        >
-          <Icon className="h-5 w-5 mx-auto" />
-        </button>
-      );
-    }
-
+  if (!staff) {
     return (
-      <button
-        key={item.id}
-          onClick={() => router.push(`/admin/dashboard/${item.id}`)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-          isActive
-            ? "bg-blue-600 text-white shadow-lg"
-            : "text-gray-300 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white"
-        }`}
-      >
-        <Icon className={`h-5 w-5 ${isActive ? "text-white" : item.color}`} />
-        <span className="font-medium">{item.label}</span>
-      </button>
+      <div className="flex h-dvh items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+      </div>
     );
-  };
+  }
 
-  const sidebarBg = isDark 
-    ? "bg-gray-900 text-white border-r border-gray-800" 
-    : "bg-white text-gray-900 border-r border-gray-200 shadow-lg";
-  const sidebarText = isDark ? "text-white" : "text-gray-900";
-  const sidebarHover = isDark ? "hover:bg-gray-800" : "hover:bg-gray-50";
-  const sidebarBorder = isDark ? "border-gray-800" : "border-gray-200";
+  const nav = (
+    <nav aria-label="Dashboard" className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      {MENU_ITEMS.filter((item) => hasPermission(item.requiredPermission)).map((item) => {
+        const active = isActive(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            title={collapsed ? item.label : undefined}
+            aria-current={active ? "page" : undefined}
+            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+              active
+                ? "bg-zinc-900 text-white shadow-sm dark:bg-white dark:text-zinc-900"
+                : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/70 dark:hover:text-white"
+            } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
+          >
+            <item.icon className={`h-[18px] w-[18px] shrink-0 ${active ? "" : "text-zinc-400 group-hover:text-brand-600 dark:group-hover:text-brand-300"}`} />
+            <span className={collapsed ? "lg:sr-only" : ""}>{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
+    <div className="flex h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       <aside
-        ref={sidebarRef}
-        className={`${sidebarCollapsed ? "w-16" : "w-72"} ${sidebarBg} flex flex-col transition-all duration-300 ease-in-out relative z-40`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white transition-all duration-300 lg:static lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        } ${collapsed ? "lg:w-[76px]" : "lg:w-64"}`}
       >
-        {/* Header */}
-        <div className={`${sidebarCollapsed ? "p-2" : "p-4"} border-b ${sidebarBorder}`}>
-          <div className="flex items-center justify-between">
-            {!sidebarCollapsed && (
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <LayoutDashboard className="h-5 w-5 text-white" />
-                </div>
-                <h1 className={`text-lg font-bold ${sidebarText}`}>Admin Panel</h1>
-              </div>
-            )}
-            <button
-              onClick={() => {
-                setSidebarCollapsed(!sidebarCollapsed);
-                setCollapsedDropdown(null);
-              }}
-              className={`p-2 ${sidebarHover} rounded-lg transition-colors`}
-              title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              {sidebarCollapsed ? (
-                <ChevronRight className={`h-4 w-4 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
-              ) : (
-                <ChevronLeft className={`h-4 w-4 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
-              )}
-            </button>
-          </div>
+        <div className={`flex h-16 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 ${collapsed ? "lg:justify-center" : "justify-between"}`}>
+          <Link href="/admin/dashboard" className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200 dark:ring-zinc-700">
+              <Image src="/logo.png" alt="" width={36} height={36} />
+            </span>
+            <span className={`font-display text-base font-extrabold ${collapsed ? "lg:hidden" : ""}`}>
+              Admin<span className="text-accent">Panel</span>
+            </span>
+          </Link>
+          <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-zinc-500 lg:hidden" aria-label="Close menu">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className={`flex-1 overflow-y-auto py-4 ${sidebarCollapsed ? "px-1" : "px-2"}`}>
-          <div className="space-y-1">{menuItems.map((item) => renderMenuItem(item))}</div>
-        </nav>
+        {nav}
 
-        {/* User Profile Section */}
-        <div className={`border-t ${sidebarBorder} p-4`}>
-          {!sidebarCollapsed ? (
-            <div className={`${isDark ? "bg-gray-800" : "bg-gray-50"} rounded-lg p-4`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-600 rounded-full mr-3">
-                    {(() => {
-                      const UserIcon = getUserIcon();
-                      return <UserIcon className="h-4 w-4 text-white" />;
-                    })()}
-                  </div>
-                  <div>
-                    <h3 className={`text-sm font-medium ${sidebarText}`}>{userInfo.name}</h3>
-                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{getUserRoleText()}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className={`p-2 ${isDark ? "hover:bg-red-600" : "hover:bg-red-100"} rounded-lg transition-colors group`}
-                  title="Logout"
-                >
-                  <LogOut className={`h-4 w-4 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-red-600"}`} />
-                </button>
-              </div>
+        <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+          <div className={`flex items-center gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60 ${collapsed ? "lg:justify-center lg:bg-transparent lg:p-1 dark:lg:bg-transparent" : ""}`}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/60 text-sm font-bold text-brand-700 dark:text-brand-200">
+              {staff.name.charAt(0).toUpperCase()}
+            </span>
+            <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
+              <p className="truncate text-sm font-semibold">{staff.name}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{ROLE_LABELS[staff.role] || "Staff"}</p>
             </div>
-          ) : (
-            <div className="flex flex-col items-center space-y-2">
-              <div className="p-2 bg-blue-600 rounded-full">
-                {(() => {
-                  const UserIcon = getUserIcon();
-                  return <UserIcon className="h-4 w-4 text-white" />;
-                })()}
-              </div>
-              <button
-                onClick={handleLogout}
-                className={`p-2 ${isDark ? "hover:bg-red-600" : "hover:bg-red-100"} rounded-lg transition-colors group`}
-                title="Logout"
-              >
-                <LogOut className={`h-4 w-4 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-red-600"}`} />
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Log out"
+              aria-label="Log out"
+              className={`rounded-lg p-2 text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 ${collapsed ? "lg:hidden" : ""}`}
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            className="mt-2 hidden w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 lg:flex dark:hover:bg-zinc-800"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4" /> Collapse</>}
+          </button>
         </div>
       </aside>
 
-      {/* Floating Dropdown for Collapsed Sidebar */}
-      {sidebarCollapsed && collapsedDropdown && (
-        <div
-          ref={dropdownRef}
-          className={`fixed z-50 ${isDark ? "bg-gray-800" : "bg-white"} rounded-lg shadow-2xl border ${sidebarBorder} min-w-64 max-w-80`}
-          style={{
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-          }}
-        >
-          {(() => {
-            const item = menuItems.find((item) => item.id === collapsedDropdown);
-            if (!item || !item.children) return null;
-            return (
-              <div className="p-2">
-                {item.children.map((child) => {
-                  const ChildIcon = child.icon;
-                  return (
-                    <button
-                      key={child.id}
-                      onClick={() => {
-                        router.push(`/admin/dashboard/${item.id}/${child.id}`);
-                        setCollapsedDropdown(null);
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${sidebarHover} ${sidebarText} transition-colors`}
-                    >
-                      <ChildIcon className={`h-4 w-4 ${child.color}`} />
-                      <span>{child.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
-      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-white/80 px-4 backdrop-blur-xl sm:px-6 dark:border-zinc-800 dark:bg-zinc-900/80">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 lg:hidden dark:border-zinc-800"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <h1 className="truncate font-display text-lg font-bold">{current?.label || "Dashboard"}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/" target="_blank" className="btn-ghost hidden px-3 py-2 sm:inline-flex">
+              <ExternalLink className="h-4 w-4" /> View site
+            </Link>
+            <ThemeToggle />
+            <button type="button" onClick={handleLogout} className="btn-ghost px-3 py-2 lg:hidden" aria-label="Log out">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-        {children}
+        <main className="flex-1 overflow-y-auto">{forbidden ? null : children}</main>
       </div>
     </div>
   );

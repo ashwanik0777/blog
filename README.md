@@ -127,16 +127,15 @@ graph TB
 ```
 ├── src/
 │   ├── app/                 # App Router: Public, admin, auth, API routes
-│   │   ├── (admin)/         # Admin dashboard routes
-│   │   ├── (auth)/          # Authentication pages
-│   │   ├── (blog)/          # Public blog pages
+│   │   ├── (site)/          # Public pages: home, /blog/[slug], /topics, legal, contact
+│   │   ├── admin/           # Staff login + dashboard
 │   │   ├── api/             # Backend API endpoints
-│   │   ├── setup/           # Initial setup page
+│   │   ├── sitemap.ts, robots.ts, feed.xml/   # SEO + RSS
 │   │   └── ...
 │   ├── components/          # Reusable UI components (AdminBlogEditor, Chatbot, etc.)
-│   ├── lib/                 # Utilities: Auth options, MongoDB connection
+│   ├── lib/                 # Auth, security (validation + rate limits), blog data, email, MongoDB
 │   ├── models/              # Mongoose Schemas: Blog, User, Comment, Settings, etc.
-│   └── middleware.ts        # Middleware configuration
+│   └── proxy.ts             # Rate limiting, CSRF checks, legacy URL redirects
 ├── pages/
 │   └── api/                 # API Routes
 ├── public/                  # Static assets
@@ -170,33 +169,38 @@ graph TB
    ```
 
 3. **Configure Environment:**
-   Create a `.env.local` file in the root directory and add the following variables:
+   Create a single `.env` file in the root directory:
 
    ```env
    # Database
    MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/blog
-
-   # Authentication
-   NEXTAUTH_SECRET=your_super_secret_key
-   NEXTAUTH_URL=http://localhost:3000
+   # Public site URL, no trailing slash (canonical URLs, sitemap, RSS, OG images)
    NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
-   # Google OAuth (Optional)
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   # Session signing secret — long random string, required in production
+   ADMIN_JWT_SECRET=
+
+   # First admin (only used while no admin exists in the database; min 8 chars)
+   ADMIN_NAME=Admin
+   ADMIN_EMAIL=
+   ADMIN_PASSWORD=
 
    # AI
-   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_API_KEY=
 
    # Image Upload (Cloudinary)
-   CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
+   CLOUDINARY_CLOUD_NAME=
+   CLOUDINARY_API_KEY=
+   CLOUDINARY_API_SECRET=
 
-   # Initial Admin Setup (Optional defaults)
-   ADMIN_EMAIL=admin@in.com
-   ADMIN_PASSWORD=admin
-   ADMIN_NAME=Admin
+   # Newsletter email (Resend) + scheduled sends
+   RESEND_API_KEY=
+   NEWSLETTER_FROM_EMAIL="TechUpdatesZone <newsletter@yourdomain.com>"
+   CRON_SECRET=
+
+   # Search engine verification (optional)
+   GOOGLE_SITE_VERIFICATION=
+   BING_SITE_VERIFICATION=
    ```
 
 4. **Run the application:**
@@ -205,8 +209,9 @@ graph TB
    ```
 
 5. **Initial Setup:**
-   - Visit `http://localhost:3000/setup` to create your first admin account if you haven't set one up via env vars or seeding.
-   - Visit `http://localhost:3000/admin` to access the dashboard.
+   - Visit `http://localhost:3000/admin` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` — the first admin account is created on that first login.
+   - Change the password right away from **Settings → Password**.
+   - Run **Settings → Maintenance → Sync indexes** once after the first deploy.
 
 ---
 
@@ -228,14 +233,15 @@ npm run lint         # ESLint
 ### Authentication
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth/[...nextauth]` | GET/POST | NextAuth provider router |
-| `/api/setup` | POST | Create initial admin user |
+| `/api/auth/signin` | POST | Staff sign in (rate limited). The first admin is bootstrapped from `ADMIN_EMAIL` / `ADMIN_PASSWORD` only while no admin exists |
+| `/api/auth/logout` | POST | Clear the session cookie |
+| `/api/auth/admin-session` | GET | Current staff session (re-validated against the database) |
 
 ### Blog & Content
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/blog` | GET/POST | List blogs / Create blog |
-| `/api/blog/[slug]` | GET/PUT/DELETE | Get, Update, Delete blog |
+| `/api/blog/[id]` | GET/PUT/PATCH/DELETE | Get, update, moderate, delete a blog (public pages use `/blog/<slug>`) |
 | `/api/upload-image` | POST | Upload image to Cloudinary |
 
 ### AI Services
@@ -263,8 +269,8 @@ npm run lint         # ESLint
 ## 👩‍💻 User & Admin Guide
 
 ### Getting Started
-1. **Setup:** Use `/setup` to create your admin account.
-2. **Login:** Access `/admin` and log in with your credentials.
+1. **First login:** Open `/admin` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` (creates the first admin).
+2. **Login:** Afterwards use `/admin` with your own credentials.
 3. **Dashboard:** View analytics, manage content, and configure settings.
 
 ### Writing & Publishing
@@ -301,8 +307,9 @@ The platform leverages Google Gemini for:
 ### Vercel (Recommended)
 1. Push your code to a GitHub repository.
 2. Import the project into Vercel.
-3. Add all environment variables from `.env.local`.
-4. Deploy.
+3. Add all environment variables from `.env` (set `NEXT_PUBLIC_BASE_URL` to your real domain).
+4. `vercel.json` schedules `/api/cron/newsletters` daily to deliver scheduled newsletters.
+5. Deploy.
 
 ### Docker
 (Standard Next.js Dockerfile structure applies)
@@ -311,10 +318,12 @@ The platform leverages Google Gemini for:
 
 ## 🛡️ Security
 
-- **Authentication:** Secure sessions via NextAuth.
-- **Authorization:** Role-based access control for Admin routes.
-- **Data Safety:** Inputs sanitized; passwords hashed.
-- **Rate Limiting:** Implemented via custom logic or external providers (e.g., Vercel).
+- **Sessions:** HS256-signed, httpOnly + `SameSite=Strict` cookies; every admin API re-checks the user in the database, so disabled staff lose access immediately.
+- **Brute force:** login is limited to 5 attempts per 15 minutes per IP.
+- **Injection:** all inputs are type-checked and length-limited (blocks NoSQL operator injection); Markdown is rendered without raw HTML.
+- **CSRF:** cross-site state-changing API requests are rejected in `src/proxy.ts`.
+- **Headers:** CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, strict referrer and permissions policies (`next.config.ts`).
+- **Abuse limits:** per-route rate limits, request size caps and honeypot fields on public forms. For real DDoS protection put Vercel Firewall or Cloudflare in front — in-app limits are per server instance.
 
 ---
 

@@ -1,150 +1,107 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Blog from '@/models/Blog';
-import User from '@/models/User';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, readJsonBody, serverError } from '@/lib/security';
+import { buildUniqueSlug, estimateReadingTime, parseBlogInput } from '@/lib/blogInput';
+import { revalidatePublicContent } from '@/lib/revalidate';
+import { ensureHostedImage } from '@/lib/cloudinary';
 
-function estimateReadingTime(content?: string) {
-  if (!content) return 1;
-  const words = content.split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / 200));
-}
-
-function toSlug(text: string) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-async function buildUniqueSlug(title: string) {
-  const base = toSlug(title) || 'blog';
-  let slug = base;
-  let counter = 1;
-  while (await Blog.exists({ slug })) {
-    counter += 1;
-    slug = `${base}-${counter}`;
-  }
-  return slug;
+function readInt(value: string | null, fallback: number, min: number, max: number) {
+  const parsed = Number.parseInt(value || '', 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(parsed, min), max);
 }
 
 export async function GET(req: Request) {
   try {
+    const url = new URL(req.url);
+    const isAdmin = url.searchParams.get('admin') === 'true';
+    const page = readInt(url.searchParams.get('page'), 1, 1, 1000);
+
     await dbConnect();
 
-    const url = new URL(req.url!, process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
-    const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const pageSize = Math.min(parseInt(url.searchParams.get('pageSize') || '10', 10), 50);
-    const isAdmin = url.searchParams.get('admin') === 'true';
-    const skip = (page - 1) * pageSize;
-
     if (isAdmin) {
-      const { errorResponse } = requirePermission(req, 'manage_blogs');
+      const { errorResponse } = await requirePermission(req, 'manage_blogs');
+      if (errorResponse) return errorResponse;
 
-      if (errorResponse) {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
-      }
+      const pageSize = readInt(url.searchParams.get('pageSize'), 200, 1, 500);
+      // One-time data fix: older posts were published without a publishedAt date.
+      await Blog.updateMany(
+        { published: true, publishedAt: { $exists: false } },
+        [{ $set: { publishedAt: '$createdAt' } }]
+      );
 
-      const selectFields = 'title summary excerpt content featuredImage categories tags featured readingTime createdAt author published publishedAt status views metaTitle metaDescription keywords';
+      const selectFields = 'title slug summary excerpt content featuredImage categories tags featured readingTime createdAt updatedAt author published publishedAt status views metaTitle metaDescription keywords';
       const [total, blogs] = await Promise.all([
         Blog.countDocuments(),
         Blog.find()
           .select(selectFields)
           .populate('author', 'name email image')
           .sort({ createdAt: -1 })
-          .skip(skip)
+          .skip((page - 1) * pageSize)
           .limit(pageSize)
           .lean(),
       ]);
 
-      const response = NextResponse.json({ blogs, total });
-      response.headers.set('Cache-Control', 'no-store');
-      return response;
+      return NextResponse.json({ blogs, total }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const selectFields = 'title summary excerpt featuredImage categories tags featured readingTime createdAt author publishedAt';
+    const pageSize = readInt(url.searchParams.get('pageSize'), 12, 1, 50);
+    const selectFields = 'title slug summary excerpt featuredImage categories tags featured readingTime createdAt publishedAt author';
     const [total, blogs] = await Promise.all([
       Blog.countDocuments({ published: true }),
       Blog.find({ published: true })
         .select(selectFields)
         .populate('author', 'name image')
-        .sort({ createdAt: -1 })
-        .skip(skip)
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip((page - 1) * pageSize)
         .limit(pageSize)
         .lean(),
     ]);
 
-    const response = NextResponse.json({ blogs, total });
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-    return response;
+    return NextResponse.json(
+      { blogs, total, page, pageSize },
+      { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } }
+    );
   } catch (error) {
-    console.error('Blog API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return serverError('Blog API error', error, 'Internal server error');
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const { user, errorResponse } = await requirePermission(req, 'manage_blogs');
+    if (errorResponse || !user) return errorResponse;
+
+    const body = await readJsonBody(req, 1024 * 1024);
+    if (!body) return badRequest('Invalid blog payload');
+
+    const fields = parseBlogInput(body);
+    if (!fields.title || !fields.content) {
+      return badRequest('Title and content are required');
+    }
+
     await dbConnect();
-
-    const { user, errorResponse } = requirePermission(req, 'manage_blogs');
-    if (errorResponse || !user) {
-      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+    if (typeof fields.featuredImage === 'string' && fields.featuredImage) {
+      fields.featuredImage = await ensureHostedImage(fields.featuredImage);
     }
+    const published = fields.published === true;
+    const slug = await buildUniqueSlug(String(fields.slug || fields.title));
 
-    const data = await req.json();
-
-    const author = await User.findOne({ email: user.email }).select('_id');
-
-    if (!author) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // AI moderation
-    let status = data.status || 'pending';
-    let flaggedReason = '';
-
-    if (data.content) {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const res = await fetch(baseUrl + '/api/ai/moderate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: data.content }),
-        });
-        const mod = await res.json();
-        if (mod.verdict === 'flagged') {
-          status = 'flagged';
-          flaggedReason = mod.reason;
-        } else if (mod.verdict === 'needs review') {
-          status = 'pending';
-          flaggedReason = mod.reason;
-        } else {
-          status = 'approved';
-        }
-      } catch (e) {
-        console.warn('AI moderation failed', e);
-      }
-    }
-
-    const slug = data.slug || await buildUniqueSlug(data.title || 'blog');
-    const blog = new Blog({
-      ...data,
+    const blog = await Blog.create({
+      ...fields,
       slug,
-      author: author._id,
-      status,
-      flaggedReason,
-      published: data.published || false,
-      publishedAt: data.published ? new Date() : undefined,
-      readingTime: data.readingTime || estimateReadingTime(data.content),
+      author: user.id,
+      published,
+      status: published ? 'approved' : 'draft',
+      publishedAt: published ? new Date() : undefined,
+      readingTime: fields.readingTime || estimateReadingTime(String(fields.content)),
     });
 
-    await blog.save();
-
+    revalidatePublicContent();
     return NextResponse.json(blog);
   } catch (error) {
-    console.error('Blog creation error:', error);
-    return NextResponse.json({ error: 'Failed to create blog' }, { status: 500 });
+    return serverError('Blog creation error', error, 'Failed to create blog');
   }
 }

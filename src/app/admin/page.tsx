@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Lock } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -16,9 +18,9 @@ export default function AdminLoginPage() {
       try {
         const response = await fetch('/api/auth/admin-session');
         if (response.ok) {
-          router.push('/admin/dashboard');
+          router.replace('/admin/dashboard');
         }
-      } catch (error) {
+      } catch {
         // Session not valid, continue to login
       } finally {
         setCheckingSession(false);
@@ -29,8 +31,8 @@ export default function AdminLoginPage() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-dvh items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-600 border-t-transparent"></div>
       </div>
     );
   }
@@ -64,7 +66,7 @@ export default function AdminLoginPage() {
         setLoading(false);
         return;
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     }
 
@@ -72,36 +74,39 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Admin Access
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Sign in to access the admin dashboard
-            </p>
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-zinc-50 p-4 dark:bg-zinc-950">
+      <div className="bg-grid pointer-events-none absolute inset-0" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[640px] -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-400/30 via-fuchsia-400/20 to-cyan-300/30 blur-3xl dark:from-brand-700/30 dark:via-fuchsia-700/20 dark:to-cyan-700/20" />
+      <div className="relative w-full max-w-md">
+        <div className="card p-8 shadow-2xl shadow-zinc-900/10">
+          <div className="mb-8 text-center">
+            <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-sm">
+              <Lock className="h-5 w-5" />
+            </span>
+            <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white">Staff sign in</h1>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Sign in to manage TechUpdatesZone</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
+              <label htmlFor="email" className="label">
+                Email address
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="admin@example.com"
+                className="input"
+                placeholder="you@company.com"
+                autoComplete="username"
+                maxLength={254}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="password" className="label">
                 Password
               </label>
               <input
@@ -109,43 +114,42 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="input"
                 placeholder="Enter your password"
+                autoComplete="current-password"
+                maxLength={200}
                 required
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-red-600 dark:text-red-400 text-sm font-medium">{error}</p>
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-900 dark:bg-rose-950/30">
+                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{error}</p>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
-            >
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3">
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Signing in...
-                </div>
+                </>
               ) : (
-                "Sign In"
+                "Sign in"
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Only authorized administrators can access this area
-            </p>
-          </div>
+          <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+            Authorized staff only. Repeated failed attempts are temporarily blocked.
+          </p>
         </div>
+        <p className="mt-6 text-center text-sm">
+          <Link href="/" className="font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+            ← Back to the blog
+          </Link>
+        </p>
       </div>
     </div>
   );
 }
-
- 

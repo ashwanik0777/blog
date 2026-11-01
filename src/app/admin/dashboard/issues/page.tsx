@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { AlertCircle, CheckCircle, XCircle, Clock, Mail, User, MessageSquare, Search, Filter, Trash2, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { AlertCircle, CheckCircle, XCircle, Clock, Mail, User, MessageSquare, Search, Trash2, Eye } from "lucide-react";
 
 interface Issue {
   _id: string;
@@ -18,7 +18,6 @@ interface Issue {
 
 export default function IssuesPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [filteredIssues, setFilteredIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'resolved' | 'closed'>('all');
@@ -29,10 +28,6 @@ export default function IssuesPage() {
   useEffect(() => {
     fetchIssues();
   }, []);
-
-  useEffect(() => {
-    filterIssues();
-  }, [issues, searchTerm, statusFilter]);
 
   async function fetchIssues() {
     try {
@@ -48,7 +43,7 @@ export default function IssuesPage() {
     }
   }
 
-  function filterIssues() {
+  const filteredIssues = useMemo(() => {
     let filtered = [...issues];
 
     if (statusFilter !== 'all') {
@@ -65,8 +60,8 @@ export default function IssuesPage() {
       );
     }
 
-    setFilteredIssues(filtered);
-  }
+    return filtered;
+  }, [issues, searchTerm, statusFilter]);
 
   async function updateIssueStatus(issueId: string, status: 'pending' | 'resolved' | 'closed', notes?: string) {
     try {
@@ -116,8 +111,8 @@ export default function IssuesPage() {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'resolved': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'closed': return 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400';
+      default: return 'bg-zinc-100 text-zinc-800';
     }
   }
 
@@ -138,7 +133,7 @@ export default function IssuesPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
         </div>
       </div>
     );
@@ -147,61 +142,61 @@ export default function IssuesPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Reported Issues</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage and resolve user-reported issues</p>
+        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Reported Issues</h1>
+        <p className="text-zinc-600 dark:text-zinc-400">Manage and resolve user-reported issues</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Issues</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{issues.length}</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Total Issues</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{issues.length}</p>
             </div>
-            <AlertCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <AlertCircle className="h-8 w-8 text-brand-600 dark:text-brand-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pending</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Pending</p>
               <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}</p>
             </div>
             <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Resolved</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Resolved</p>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">{resolvedCount}</p>
             </div>
             <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Closed</p>
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{closedCount}</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Closed</p>
+              <p className="text-2xl font-bold text-zinc-600 dark:text-zinc-400">{closedCount}</p>
             </div>
-            <XCircle className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+            <XCircle className="h-8 w-8 text-zinc-600 dark:text-zinc-400" />
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />
             <input
               type="text"
               placeholder="Search by name, email, subject, or message..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
           <div className="flex gap-2">
@@ -209,8 +204,8 @@ export default function IssuesPage() {
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
               }`}
             >
               All
@@ -220,7 +215,7 @@ export default function IssuesPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 statusFilter === 'pending'
                   ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
               }`}
             >
               Pending
@@ -230,7 +225,7 @@ export default function IssuesPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 statusFilter === 'resolved'
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
               }`}
             >
               Resolved
@@ -239,8 +234,8 @@ export default function IssuesPage() {
               onClick={() => setStatusFilter('closed')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 statusFilter === 'closed'
-                  ? 'bg-gray-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-zinc-600 text-white'
+                  : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
               }`}
             >
               Closed
@@ -250,20 +245,20 @@ export default function IssuesPage() {
       </div>
 
       {/* Issues List */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700 overflow-hidden">
         {filteredIssues.length === 0 ? (
           <div className="p-12 text-center">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">No issues found</p>
+            <AlertCircle className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
+            <p className="text-zinc-600 dark:text-zinc-400">No issues found</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
             {filteredIssues.map((issue) => {
               const StatusIcon = getStatusIcon(issue.status);
               return (
                 <div
                   key={issue._id}
-                  className="p-6 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer"
+                  className="p-6 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer"
                   onClick={() => {
                     setSelectedIssue(issue);
                     setAdminNotes(issue.adminNotes || "");
@@ -272,13 +267,13 @@ export default function IssuesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <StatusIcon className={`h-5 w-5 ${issue.status === 'pending' ? 'text-yellow-600' : issue.status === 'resolved' ? 'text-green-600' : 'text-gray-600'}`} />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{issue.subject}</h3>
+                        <StatusIcon className={`h-5 w-5 ${issue.status === 'pending' ? 'text-yellow-600' : issue.status === 'resolved' ? 'text-green-600' : 'text-zinc-600'}`} />
+                        <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">{issue.subject}</h3>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(issue.status)}`}>
                           {issue.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400 mb-2">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
                           <span>{issue.name}</span>
@@ -292,7 +287,7 @@ export default function IssuesPage() {
                           <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300 line-clamp-2">{issue.message}</p>
+                      <p className="text-zinc-700 dark:text-zinc-300 line-clamp-2">{issue.message}</p>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
@@ -301,7 +296,7 @@ export default function IssuesPage() {
                           setSelectedIssue(issue);
                           setAdminNotes(issue.adminNotes || "");
                         }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        className="p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye className="h-5 w-5" />
@@ -328,12 +323,12 @@ export default function IssuesPage() {
       {/* Issue Detail Modal */}
       {selectedIssue && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedIssue(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-700">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{selectedIssue.subject}</h2>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{selectedIssue.subject}</h2>
+                  <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
                       <span>{selectedIssue.name}</span>
@@ -350,9 +345,9 @@ export default function IssuesPage() {
                 </div>
                 <button
                   onClick={() => setSelectedIssue(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                 >
-                  <XCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <XCircle className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                 </button>
               </div>
               <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedIssue.status)}`}>
@@ -362,19 +357,19 @@ export default function IssuesPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
                   Message
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
+                <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg">
                   {selectedIssue.message}
                 </p>
               </div>
 
               {selectedIssue.adminNotes && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Admin Notes</h3>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Admin Notes</h3>
+                  <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap bg-brand-50 dark:bg-brand-900/20 p-4 rounded-lg">
                     {selectedIssue.adminNotes}
                   </p>
                 </div>
@@ -392,14 +387,14 @@ export default function IssuesPage() {
               )}
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Admin Notes
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   placeholder="Add notes about this issue..."
                 />
               </div>
@@ -418,7 +413,7 @@ export default function IssuesPage() {
                   <button
                     onClick={() => updateIssueStatus(selectedIssue._id, 'closed')}
                     disabled={updating}
-                    className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors font-medium"
+                    className="flex-1 bg-zinc-600 text-white px-4 py-2 rounded-lg hover:bg-zinc-700 disabled:opacity-50 transition-colors font-medium"
                   >
                     Close Issue
                   </button>
@@ -441,7 +436,7 @@ export default function IssuesPage() {
                     }
                   }}
                   disabled={updating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                  className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors font-medium"
                 >
                   Save Notes
                 </button>

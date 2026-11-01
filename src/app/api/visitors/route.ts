@@ -1,19 +1,33 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Visitor from '@/models/Visitor';
-import { headers } from 'next/headers';
+import { randomUUID } from 'crypto';
+import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, cleanString, getClientIp, limitRequest, readJsonBody, serverError } from '@/lib/security';
+
+const BOT_PATTERN = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|headless|lighthouse/i;
 
 export async function POST(req: Request) {
   try {
-    await dbConnect();
-    const { path, sessionId } = await req.json();
-    
-    const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               headersList.get('x-real-ip') || 
-               'unknown';
-    const userAgent = headersList.get('user-agent') || '';
-    const referer = headersList.get('referer') || '';
+    const limited = limitRequest(req, 'visitor', 60, 60 * 1000);
+    if (limited) return limited;
+
+    const body = await readJsonBody(req, 2 * 1024);
+    if (!body) return badRequest();
+
+    const userAgent = (req.headers.get('user-agent') || '').slice(0, 400);
+    if (!userAgent || BOT_PATTERN.test(userAgent)) {
+      return NextResponse.json({ success: true });
+    }
+
+    const rawPath = cleanString(body.path, 300);
+    const path = rawPath.startsWith('/') ? rawPath : '/';
+    if (path.startsWith('/admin') || path.startsWith('/api')) {
+      return NextResponse.json({ success: true });
+    }
+    const sessionId = cleanString(body.sessionId, 80) || randomUUID();
+    const ip = getClientIp(req);
+    const referer = (req.headers.get('referer') || '').slice(0, 500);
 
     // Enhanced device/browser detection
     let device = 'desktop';
@@ -22,46 +36,51 @@ export async function POST(req: Request) {
     const ua = userAgent.toLowerCase();
     
     // Device detection
-    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-      device = 'mobile';
-    } else if (ua.includes('tablet') || ua.includes('ipad')) {
+    if (ua.includes('ipad') || ua.includes('tablet')) {
       device = 'tablet';
+    } else if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+      device = 'mobile';
     }
 
     // Browser detection
-    if (ua.includes('chrome') && !ua.includes('edg')) {
-      browser = 'chrome';
-    } else if (ua.includes('firefox')) {
-      browser = 'firefox';
-    } else if (ua.includes('safari') && !ua.includes('chrome')) {
-      browser = 'safari';
-    } else if (ua.includes('edg')) {
+    if (ua.includes('edg')) {
       browser = 'edge';
     } else if (ua.includes('opera') || ua.includes('opr')) {
       browser = 'opera';
+    } else if (ua.includes('chrome')) {
+      browser = 'chrome';
+    } else if (ua.includes('firefox')) {
+      browser = 'firefox';
+    } else if (ua.includes('safari')) {
+      browser = 'safari';
     }
 
+    await dbConnect();
     // Create visitor record - every page view is tracked
     await Visitor.create({
       ip,
       userAgent,
       referer: referer || 'direct',
-      path: path || '/',
-      sessionId: sessionId || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      path,
+      sessionId,
       device,
       browser,
       visitedAt: new Date(),
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Visitor tracking error:', error);
-    return NextResponse.json({ error: 'Failed to track visitor' }, { status: 500 });
+  } catch (error) {
+    return serverError('Visitor tracking error', error, 'Failed to track visitor');
   }
 }
 
+type AggregateRow = { _id: string | null; count: number };
+
 export async function GET(req: Request) {
   try {
+    const { errorResponse } = await requirePermission(req, 'view_analytics');
+    if (errorResponse) return errorResponse;
+
     await dbConnect();
     const url = new URL(req.url!);
     const range = url.searchParams.get('range') || '7d';
@@ -94,10 +113,10 @@ export async function GET(req: Request) {
     // For stats only (used by footer)
     if (statsOnly) {
       const totalPageViews = await Visitor.countDocuments(dateFilter);
-      const uniqueVisitors = await Visitor.distinct('ip', dateFilter);
+      const uniqueVisitors = await countUniqueIps(dateFilter);
       
       return NextResponse.json({
-        uniqueVisitors: uniqueVisitors.length,
+        uniqueVisitors,
         totalPageViews,
       });
     }
@@ -126,7 +145,7 @@ export async function GET(req: Request) {
     const totalViews = await Visitor.countDocuments(dateFilter);
 
     // Get unique IPs
-    const uniqueIPs = await Visitor.distinct('ip', dateFilter);
+    const uniqueIPCount = await countUniqueIps(dateFilter);
 
     // Get page views by day
     const pageViewsByDay = await Visitor.aggregate([
@@ -161,32 +180,36 @@ export async function GET(req: Request) {
     ]);
 
     return NextResponse.json({
-      uniqueVisitors: uniqueIPs.length,
+      uniqueVisitors: uniqueIPCount,
       totalViews,
-      uniqueIPs: uniqueIPs.length,
-      visitorsByDay: uniqueVisitorsByDay.reduce((acc: any, item: any) => {
-        acc[item._id] = item.count;
+      uniqueIPs: uniqueIPCount,
+      visitorsByDay: uniqueVisitorsByDay.reduce((acc: Record<string, number>, item: AggregateRow) => {
+        acc[item._id ?? 'unknown'] = item.count;
         return acc;
       }, {}),
-      pageViewsByDay: pageViewsByDay.reduce((acc: any, item: any) => {
-        acc[item._id] = item.count;
+      pageViewsByDay: pageViewsByDay.reduce((acc: Record<string, number>, item: AggregateRow) => {
+        acc[item._id ?? 'unknown'] = item.count;
         return acc;
       }, {}),
-      topPages: topPages.map((item: any) => ({
+      topPages: topPages.map((item: AggregateRow) => ({
         page: item._id || 'unknown',
         views: item.count
       })),
-      deviceStats: deviceStats.reduce((acc: any, item: any) => {
+      deviceStats: deviceStats.reduce((acc: Record<string, number>, item: AggregateRow) => {
         acc[item._id || 'unknown'] = item.count;
         return acc;
       }, {}),
-      browserStats: browserStats.reduce((acc: any, item: any) => {
+      browserStats: browserStats.reduce((acc: Record<string, number>, item: AggregateRow) => {
         acc[item._id || 'unknown'] = item.count;
         return acc;
       }, {}),
     });
-  } catch (error: any) {
-    console.error('Visitor analytics error:', error);
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+  } catch (error) {
+    return serverError('Visitor analytics error', error, 'Failed to fetch analytics');
   }
+}
+
+async function countUniqueIps(filter: Record<string, unknown>) {
+  const [row] = await Visitor.aggregate([{ $match: filter }, { $group: { _id: '$ip' } }, { $count: 'total' }]);
+  return row?.total || 0;
 }

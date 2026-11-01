@@ -1,67 +1,49 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import mongoose, { Schema, models, model } from 'mongoose';
+import Newsletter from '@/models/Newsletter';
 import { requirePermission } from '@/lib/adminAuth';
-
-// Newsletter Schema
-const NewsletterSchema = new Schema({
-  subject: { type: String, required: true },
-  content: { type: String, required: true },
-  status: { type: String, enum: ['draft', 'scheduled', 'sent'], default: 'draft' },
-  scheduledAt: { type: Date },
-  sentAt: { type: Date },
-  recipients: { type: Number, default: 0 },
-  opened: { type: Number, default: 0 },
-  clicked: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Newsletter = models.Newsletter || model('Newsletter', NewsletterSchema);
+import { badRequest, cleanString, readJsonBody, serverError } from '@/lib/security';
 
 export async function GET(req: Request) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
   try {
-    const newsletters = await Newsletter.find()
-      .sort({ createdAt: -1 });
-    
-    return NextResponse.json({ newsletters });
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    await dbConnect();
+    const newsletters = await Newsletter.find({ subject: { $exists: true } }).sort({ createdAt: -1 }).limit(500).lean();
+    return NextResponse.json({ newsletters }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    console.error('Error fetching newsletters:', error);
-    return NextResponse.json({ error: 'Failed to fetch newsletters' }, { status: 500 });
+    return serverError('Error fetching newsletters', error, 'Failed to fetch newsletters');
   }
 }
 
 export async function POST(req: Request) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
   try {
-    const { subject, content, status, scheduledAt } = await req.json();
-    
-    if (!subject || !content) {
-      return NextResponse.json({ error: 'Subject and content are required' }, { status: 400 });
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    const body = await readJsonBody(req, 256 * 1024);
+    if (!body) return badRequest();
+
+    const subject = cleanString(body.subject, 200);
+    const content = typeof body.content === 'string' ? body.content.slice(0, 100_000) : '';
+    const status = body.status === 'scheduled' ? 'scheduled' : 'draft';
+    const scheduledAt = typeof body.scheduledAt === 'string' ? new Date(body.scheduledAt) : null;
+
+    if (!subject || !content.trim()) {
+      return badRequest('Subject and content are required');
     }
 
+    await dbConnect();
     const newsletter = await Newsletter.create({
       subject,
       content,
-      status: status || 'draft',
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined
+      status,
+      scheduledAt: scheduledAt && !Number.isNaN(scheduledAt.getTime()) ? scheduledAt : undefined,
     });
 
     return NextResponse.json(newsletter);
   } catch (error) {
-    console.error('Error creating newsletter:', error);
-    return NextResponse.json({ error: 'Failed to create newsletter' }, { status: 500 });
+    return serverError('Error creating newsletter', error, 'Failed to create newsletter');
   }
-} 
+}

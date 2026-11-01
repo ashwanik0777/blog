@@ -1,4 +1,5 @@
 "use client";
+import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -6,12 +7,11 @@ import {
   Sparkles,
   FileText,
   Tag,
-  Image,
+  Image as ImageIcon,
   Shield,
   Search,
   Wand2,
   Copy,
-  Check,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -24,7 +24,7 @@ import {
 
 export default function AIContentPage() {
   const router = useRouter();
-  const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState<'generate' | 'summarize' | 'tags' | 'alt' | 'moderate' | 'seo'>('generate');
   
@@ -60,13 +60,13 @@ export default function AIContentPage() {
   
   // Moderate State
   const [moderateContent, setModerateContent] = useState("");
-  const [moderationResult, setModerationResult] = useState<any>(null);
+  const [moderationResult, setModerationResult] = useState<{ verdict: string; reason?: string } | null>(null);
   const [moderateLoading, setModerateLoading] = useState(false);
   
   // SEO State
   const [seoContent, setSeoContent] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
-  const [seoResult, setSeoResult] = useState<any>(null);
+  const [seoResult, setSeoResult] = useState<{ recommendations?: string[] } | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
   
   const [message, setMessage] = useState("");
@@ -82,7 +82,7 @@ export default function AIContentPage() {
         } else {
           router.push('/admin');
         }
-      } catch (error) {
+      } catch {
         router.push('/admin');
       } finally {
         setCheckingAuth(false);
@@ -126,7 +126,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to generate content");
       }
-    } catch (error) {
+    } catch {
       setError("Error generating content");
     } finally {
       setGenerateLoading(false);
@@ -158,7 +158,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to summarize content");
       }
-    } catch (error) {
+    } catch {
       setError("Error summarizing content");
     } finally {
       setSummarizeLoading(false);
@@ -191,7 +191,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to suggest tags");
       }
-    } catch (error) {
+    } catch {
       setError("Error suggesting tags");
     } finally {
       setTagsLoading(false);
@@ -226,7 +226,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to generate alt text");
       }
-    } catch (error) {
+    } catch {
       setError("Error generating alt text");
     } finally {
       setAltLoading(false);
@@ -258,7 +258,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to moderate content");
       }
-    } catch (error) {
+    } catch {
       setError("Error moderating content");
     } finally {
       setModerateLoading(false);
@@ -293,7 +293,7 @@ export default function AIContentPage() {
       } else {
         setError(data.error || "Failed to optimize SEO");
       }
-    } catch (error) {
+    } catch {
       setError("Error optimizing SEO");
     } finally {
       setSeoLoading(false);
@@ -309,7 +309,7 @@ export default function AIContentPage() {
   if (checkingAuth) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
       </div>
     );
   }
@@ -320,9 +320,9 @@ export default function AIContentPage() {
 
   const tabs = [
     { id: 'generate', label: 'Generate Blog', icon: Sparkles, color: 'text-purple-600' },
-    { id: 'summarize', label: 'Summarize', icon: FileText, color: 'text-blue-600' },
+    { id: 'summarize', label: 'Summarize', icon: FileText, color: 'text-brand-600' },
     { id: 'tags', label: 'Suggest Tags', icon: Tag, color: 'text-green-600' },
-    { id: 'alt', label: 'Alt Text', icon: Image, color: 'text-orange-600' },
+    { id: 'alt', label: 'Alt Text', icon: ImageIcon, color: 'text-orange-600' },
     { id: 'moderate', label: 'Moderate', icon: Shield, color: 'text-red-600' },
     { id: 'seo', label: 'SEO Optimize', icon: TrendingUp, color: 'text-cyan-600' },
   ];
@@ -332,14 +332,14 @@ export default function AIContentPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-            <Brain className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-2 bg-brand-100 dark:bg-brand-900/20 rounded-lg">
+            <Brain className="h-6 w-6 text-brand-600 dark:text-brand-400" />
           </div>
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white">
           AI Content Generation
         </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Leverage Google Gemini AI to create, optimize, and enhance your content
             </p>
           </div>
@@ -371,21 +371,21 @@ export default function AIContentPage() {
 
       {/* Tabs */}
       <div className="mb-8">
-        <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id as any);
+                  setActiveTab(tab.id as typeof activeTab);
                   setError("");
                   setMessage("");
                 }}
                 className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'border-brand-600 text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20'
+                    : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
                 <Icon className={`h-4 w-4 ${activeTab === tab.id ? tab.color : ''}`} />
@@ -401,21 +401,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               Generate Blog Content
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Create a complete blog post with title, content, summary, tags, and categories
             </p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Blog Title *
               </label>
               <input
@@ -423,12 +423,12 @@ export default function AIContentPage() {
                 value={generateTitle}
                 onChange={(e) => setGenerateTitle(e.target.value)}
                 placeholder="Enter blog title..."
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Keywords (optional)
               </label>
               <input
@@ -436,7 +436,7 @@ export default function AIContentPage() {
                 value={generateKeywords}
                 onChange={(e) => setGenerateKeywords(e.target.value)}
                 placeholder="keyword1, keyword2, keyword3"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
 
@@ -459,20 +459,20 @@ export default function AIContentPage() {
             </button>
 
             {(generatedContent || generatedSummary || generatedTags.length > 0) && (
-              <div className="mt-6 space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="mt-6 space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
                 {(generatedSeoTitle || generatedSeoDescription || generatedReadingTime) && (
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SEO Title</label>
-                      <p className="text-gray-900 dark:text-white">{generatedSeoTitle || "-"}</p>
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">SEO Title</label>
+                      <p className="text-zinc-900 dark:text-white">{generatedSeoTitle || "-"}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reading Time</label>
-                      <p className="text-gray-900 dark:text-white">{generatedReadingTime ? `${generatedReadingTime} min` : "-"}</p>
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Reading Time</label>
+                      <p className="text-zinc-900 dark:text-white">{generatedReadingTime ? `${generatedReadingTime} min` : "-"}</p>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SEO Description</label>
-                      <p className="text-gray-900 dark:text-white">{generatedSeoDescription || "-"}</p>
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">SEO Description</label>
+                      <p className="text-zinc-900 dark:text-white">{generatedSeoDescription || "-"}</p>
                     </div>
                   </div>
                 )}
@@ -480,24 +480,24 @@ export default function AIContentPage() {
                 {generatedSummary && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Summary</label>
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Summary</label>
                       <button
                         onClick={() => copyToClipboard(generatedSummary)}
-                        className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="p-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
                         <Copy className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="text-gray-900 dark:text-white">{generatedSummary}</p>
+                    <p className="text-zinc-900 dark:text-white">{generatedSummary}</p>
                   </div>
                 )}
 
                 {generatedTags.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Tags</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">Tags</label>
                     <div className="flex flex-wrap gap-2">
                       {generatedTags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                        <span key={idx} className="px-3 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded-full text-sm">
                           {tag}
                         </span>
                       ))}
@@ -507,7 +507,7 @@ export default function AIContentPage() {
 
                 {generatedCategories.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Categories</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">Categories</label>
                     <div className="flex flex-wrap gap-2">
                       {generatedCategories.map((cat, idx) => (
                         <span key={idx} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm">
@@ -521,10 +521,10 @@ export default function AIContentPage() {
                 {generatedContent && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Content</label>
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Content</label>
                       <button
                         onClick={() => copyToClipboard(generatedContent)}
-                        className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="p-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -533,18 +533,18 @@ export default function AIContentPage() {
                       readOnly
                       value={generatedContent}
                       rows={10}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
                     />
                   </div>
                 )}
 
                 {generatedReferences.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">References</label>
-                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">References</label>
+                    <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                       {generatedReferences.map((ref, idx) => (
                         <li key={`${ref.url}-${idx}`} className="break-all">
-                          <span className="font-semibold text-gray-900 dark:text-white">{ref.title}</span>
+                          <span className="font-semibold text-zinc-900 dark:text-white">{ref.title}</span>
                           {ref.url ? ` - ${ref.url}` : ''}
                         </li>
                       ))}
@@ -562,21 +562,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+              <FileText className="h-6 w-6 text-brand-600 dark:text-brand-400" />
               Summarize Content
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Generate a concise summary suitable for SEO meta descriptions
             </p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Content to Summarize *
               </label>
               <textarea
@@ -584,14 +584,14 @@ export default function AIContentPage() {
                 onChange={(e) => setSummarizeContent(e.target.value)}
                 placeholder="Paste your content here..."
                 rows={10}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
 
             <button
               onClick={handleSummarize}
               disabled={summarizeLoading || !summarizeContent.trim()}
-              className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center gap-2"
+              className="w-full bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center gap-2"
             >
               {summarizeLoading ? (
                 <>
@@ -607,17 +607,17 @@ export default function AIContentPage() {
             </button>
 
             {summarizedText && (
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="mt-6 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Summary</label>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Summary</label>
                   <button
                     onClick={() => copyToClipboard(summarizedText)}
-                    className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="p-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-gray-900 dark:text-white">{summarizedText}</p>
+                <p className="text-zinc-900 dark:text-white">{summarizedText}</p>
               </div>
             )}
           </div>
@@ -629,21 +629,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
               <Tag className="h-6 w-6 text-green-600 dark:text-green-400" />
               Suggest Tags & Categories
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Get AI-powered tag and category suggestions for your content
             </p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Content *
               </label>
               <textarea
@@ -651,7 +651,7 @@ export default function AIContentPage() {
                 onChange={(e) => setTagsContent(e.target.value)}
                 placeholder="Paste your content here..."
                 rows={10}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
 
@@ -674,13 +674,13 @@ export default function AIContentPage() {
             </button>
 
             {(suggestedTags.length > 0 || suggestedCategories.length > 0) && (
-              <div className="mt-6 space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="mt-6 space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
                 {suggestedTags.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Suggested Tags</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">Suggested Tags</label>
                     <div className="flex flex-wrap gap-2">
                       {suggestedTags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                        <span key={idx} className="px-3 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded-full text-sm">
                           {tag}
                         </span>
                       ))}
@@ -690,7 +690,7 @@ export default function AIContentPage() {
 
                 {suggestedCategories.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Suggested Categories</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">Suggested Categories</label>
                     <div className="flex flex-wrap gap-2">
                       {suggestedCategories.map((cat, idx) => (
                         <span key={idx} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm">
@@ -711,21 +711,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <Image className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+              <ImageIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               Generate Alt Text
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Create accessible alt text for images using AI
             </p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Image URL *
               </label>
               <input
@@ -733,12 +733,12 @@ export default function AIContentPage() {
                 value={altImageUrl}
                 onChange={(e) => setAltImageUrl(e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Context (optional)
               </label>
               <textarea
@@ -746,7 +746,7 @@ export default function AIContentPage() {
                 onChange={(e) => setAltContext(e.target.value)}
                 placeholder="Describe the context of the image..."
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -762,24 +762,24 @@ export default function AIContentPage() {
                 </>
               ) : (
                 <>
-                  <Image className="h-5 w-5" />
+                  <ImageIcon className="h-5 w-5" />
                   Generate Alt Text
                 </>
               )}
             </button>
 
             {generatedAltText && (
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="mt-6 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Alt Text</label>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Alt Text</label>
                   <button
                     onClick={() => copyToClipboard(generatedAltText)}
-                    className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="p-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-gray-900 dark:text-white">{generatedAltText}</p>
+                <p className="text-zinc-900 dark:text-white">{generatedAltText}</p>
               </div>
             )}
           </div>
@@ -791,21 +791,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
               <Shield className="h-6 w-6 text-red-600 dark:text-red-400" />
               Content Moderation
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-zinc-600 dark:text-zinc-400">
               Check content for inappropriate or harmful material
             </p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Content to Moderate *
               </label>
               <textarea
@@ -813,7 +813,7 @@ export default function AIContentPage() {
                 onChange={(e) => setModerateContent(e.target.value)}
                 placeholder="Paste content to check..."
                 rows={10}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
 
@@ -858,7 +858,7 @@ export default function AIContentPage() {
                   </span>
                 </div>
                 {moderationResult.reason && (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{moderationResult.reason}</p>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-2">{moderationResult.reason}</p>
                 )}
               </div>
             )}
@@ -871,21 +871,21 @@ export default function AIContentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8"
+          className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-6 md:p-8"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
               SEO Optimization
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-zinc-600 dark:text-zinc-400">
               Optimize your content for better search engine rankings
         </p>
       </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Title *
               </label>
               <input
@@ -893,12 +893,12 @@ export default function AIContentPage() {
                 value={seoTitle}
                 onChange={(e) => setSeoTitle(e.target.value)}
                 placeholder="Enter title..."
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Content *
               </label>
               <textarea
@@ -906,14 +906,14 @@ export default function AIContentPage() {
                 onChange={(e) => setSeoContent(e.target.value)}
                 placeholder="Paste your content here..."
                 rows={10}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
 
             <button
               onClick={handleSEOOptimize}
               disabled={seoLoading || !seoContent.trim() || !seoTitle.trim()}
-              className="w-full bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center gap-2"
+              className="w-full bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center gap-2"
             >
               {seoLoading ? (
                 <>
@@ -929,9 +929,9 @@ export default function AIContentPage() {
             </button>
 
             {seoResult && (
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">SEO Recommendations</h3>
-                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <div className="mt-6 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-3">SEO Recommendations</h3>
+                <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                   {seoResult.recommendations && seoResult.recommendations.map((rec: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2">
                       <CheckCircle className="h-4 w-4 text-cyan-600 dark:text-cyan-400 mt-0.5 flex-shrink-0" />

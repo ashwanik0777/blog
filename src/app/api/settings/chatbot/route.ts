@@ -2,29 +2,37 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Settings from '@/models/Settings';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, readJsonBody, serverError } from '@/lib/security';
 
 export async function GET() {
-  await dbConnect();
-  let settings = await Settings.findOne();
-  if (!settings) {
-    settings = await Settings.create({ chatbotEnabled: true });
+  try {
+    await dbConnect();
+    const settings = await Settings.findOne().select('chatbotEnabled').lean<{ chatbotEnabled?: boolean }>();
+    return NextResponse.json(
+      { chatbotEnabled: settings?.chatbotEnabled !== false },
+      { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } }
+    );
+  } catch (error) {
+    return serverError('Chatbot setting error', error);
   }
-  return NextResponse.json({ chatbotEnabled: settings.chatbotEnabled });
 }
 
 export async function POST(req: Request) {
-  await dbConnect();
-  const { errorResponse } = requirePermission(req, 'manage_settings');
-  if (errorResponse) {
-    return errorResponse;
+  const { errorResponse } = await requirePermission(req, 'manage_settings');
+  if (errorResponse) return errorResponse;
+
+  const body = await readJsonBody(req, 2 * 1024);
+  if (!body || typeof body.chatbotEnabled !== 'boolean') return badRequest('chatbotEnabled must be a boolean');
+
+  try {
+    await dbConnect();
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { $set: { chatbotEnabled: body.chatbotEnabled } },
+      { new: true, upsert: true }
+    );
+    return NextResponse.json({ chatbotEnabled: settings.chatbotEnabled });
+  } catch (error) {
+    return serverError('Chatbot setting update error', error);
   }
-  const { chatbotEnabled } = await req.json();
-  let settings = await Settings.findOne();
-  if (!settings) {
-    settings = await Settings.create({ chatbotEnabled });
-  } else {
-    settings.chatbotEnabled = chatbotEnabled;
-    await settings.save();
-  }
-  return NextResponse.json({ chatbotEnabled: settings.chatbotEnabled });
-} 
+}

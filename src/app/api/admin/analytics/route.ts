@@ -4,38 +4,18 @@ import Blog from '@/models/Blog';
 import User from '@/models/User';
 import Visitor from '@/models/Visitor';
 import Issue from '@/models/Issue';
-import Comment from '@/models/Comment';
+
 import { requirePermission } from '@/lib/adminAuth';
-import mongoose from 'mongoose';
+import NewsletterSubscriber from '@/models/NewsletterSubscriber';
+
+type AggregateRow = { _id: string | null; count: number };
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    const { errorResponse } = requirePermission(req, 'view_analytics');
-
-    if (errorResponse) {
-      // Return empty data instead of error to prevent frontend crashes
-      return NextResponse.json({ 
-        totalBlogs: 0,
-        publishedBlogs: 0,
-        totalUsers: 0,
-        totalViews: 0,
-        totalSubscribers: 0,
-        totalIssues: 0,
-        pendingIssues: 0,
-        topBlogs: [],
-        userGrowth: [],
-        viewsByDay: {},
-        uniqueVisitors: 0,
-        totalPageViews: 0,
-        uniqueIPs: 0,
-        visitorsByDay: {},
-        topPages: [],
-        deviceStats: {},
-        browserStats: {},
-      });
-    }
+    const { errorResponse } = await requirePermission(req, 'view_analytics');
+    if (errorResponse) return errorResponse;
 
     const url = new URL(req.url!);
     const range = url.searchParams.get('range') || '7d';
@@ -78,7 +58,6 @@ export async function GET(req: Request) {
       totalIssues,
       pendingIssues,
       visitorStats,
-      topComments
     ] = await Promise.all([
       Blog.countDocuments(),
       Blog.countDocuments({ published: true }),
@@ -103,11 +82,7 @@ export async function GET(req: Request) {
       // Newsletter subscribers
       (async () => {
         try {
-          const Newsletter = mongoose.models.Newsletter || mongoose.model('Newsletter', new mongoose.Schema({
-            email: String,
-            subscribedAt: Date,
-          }));
-          return await Newsletter.countDocuments();
+          return await NewsletterSubscriber.countDocuments({ subscribed: true });
         } catch {
           return 0;
         }
@@ -121,8 +96,12 @@ export async function GET(req: Request) {
           const totalPageViews = await Visitor.countDocuments(dateFilter);
 
           // Unique visitors - count distinct IPs
-          const uniqueIPs = await Visitor.distinct('ip', dateFilter);
-          const uniqueVisitorsCount = uniqueIPs.length;
+          const [uniqueRow] = await Visitor.aggregate([
+            { $match: dateFilter },
+            { $group: { _id: '$ip' } },
+            { $count: 'total' },
+          ]);
+          const uniqueVisitorsCount = uniqueRow?.total || 0;
 
           // Unique visitors by day (for chart)
           const uniqueVisitorsByDay = await Visitor.aggregate([
@@ -188,33 +167,33 @@ export async function GET(req: Request) {
           return {
             uniqueVisitors: uniqueVisitorsCount,
             totalPageViews,
-            uniqueIPs: uniqueIPs.length,
-            visitorsByDay: uniqueVisitorsByDay.reduce((acc: any, item: any) => {
-              acc[item._id] = item.count;
+            uniqueIPs: uniqueVisitorsCount,
+            visitorsByDay: uniqueVisitorsByDay.reduce((acc: Record<string, number>, item: AggregateRow) => {
+              acc[item._id ?? 'unknown'] = item.count;
               return acc;
             }, {}),
-            pageViewsByDay: pageViewsByDay.reduce((acc: any, item: any) => {
-              acc[item._id] = item.count;
+            pageViewsByDay: pageViewsByDay.reduce((acc: Record<string, number>, item: AggregateRow) => {
+              acc[item._id ?? 'unknown'] = item.count;
               return acc;
             }, {}),
-            topPages: topPages.map((item: any) => ({
+            topPages: topPages.map((item: AggregateRow) => ({
               page: item._id || 'unknown',
               views: item.count
             })),
-            deviceStats: deviceStats.reduce((acc: any, item: any) => {
+            deviceStats: deviceStats.reduce((acc: Record<string, number>, item: AggregateRow) => {
               acc[item._id || 'unknown'] = item.count;
               return acc;
             }, {}),
-            browserStats: browserStats.reduce((acc: any, item: any) => {
+            browserStats: browserStats.reduce((acc: Record<string, number>, item: AggregateRow) => {
               acc[item._id || 'unknown'] = item.count;
               return acc;
             }, {}),
-            referrerStats: referrerStats.map((item: any) => ({
+            referrerStats: referrerStats.map((item: AggregateRow) => ({
               referer: item._id || 'direct',
               count: item.count
             })),
           };
-        } catch (error: any) {
+        } catch (error) {
           console.error('Visitor stats error:', error);
           return {
             uniqueVisitors: 0,
@@ -274,11 +253,11 @@ export async function GET(req: Request) {
       deviceStats: visitorStats?.deviceStats || {},
       browserStats: visitorStats?.browserStats || {},
       referrerStats: visitorStats?.referrerStats || [],
-      topComments: topComments || [],
+      topComments: [],
     };
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Analytics error:', error);
     // Return empty data structure instead of error
     return NextResponse.json({ 

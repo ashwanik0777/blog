@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 interface Blog {
@@ -91,7 +91,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
       } else {
         setError(data.error || "Failed to generate content");
       }
-    } catch (error) {
+    } catch {
       setError("Error generating content");
     } finally {
       setAiLoading(false);
@@ -140,15 +140,12 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
     try {
       const blogData = {
         ...formData,
+        _id: blog?._id,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         categories: formData.categories.split(',').map(cat => cat.trim()).filter(Boolean),
         keywords: formData.keywords.split(',').map(keyword => keyword.trim()).filter(Boolean),
         readingTime: formData.readingTime || undefined
       };
-
-      if (blog) {
-        blogData._id = blog._id;
-      }
 
       // If onSave is provided, use it; otherwise make API call directly
       if (onSave) {
@@ -172,7 +169,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
           throw new Error(errorData.error || 'Failed to save blog');
         }
 
-        const savedBlog = await response.json();
+        await response.json();
         setMessage(`${mode === 'create' ? 'Created' : 'Updated'} successfully!`);
         
         // Call onClose if provided
@@ -182,7 +179,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
           }, 1000);
         }
       }
-    } catch (error) {
+    } catch {
       setError(`Error ${mode === 'create' ? 'creating' : 'updating'} blog`);
     } finally {
       setLoading(false);
@@ -193,15 +190,15 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+      className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6 border border-zinc-200 dark:border-zinc-700"
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
           {mode === 'create' ? 'Create New Blog' : 'Edit Blog'}
         </h2>
         <button
           onClick={onCancel || onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
         >
           ✕
         </button>
@@ -210,7 +207,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="title" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Blog Title *
           </label>
           <input
@@ -218,7 +215,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             id="title"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="Enter blog title"
             required
           />
@@ -245,7 +242,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
 
         {/* Summary */}
         <div>
-          <label htmlFor="summary" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="summary" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Summary
           </label>
           <textarea
@@ -253,7 +250,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             value={formData.summary}
             onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="Brief summary of the blog post"
           />
         </div>
@@ -261,7 +258,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
         {/* SEO Fields */}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="metaTitle" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               SEO Title
             </label>
             <input
@@ -269,12 +266,12 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
               id="metaTitle"
               value={formData.metaTitle}
               onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               placeholder="SEO friendly title"
             />
           </div>
           <div>
-            <label htmlFor="readingTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="readingTime" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               Reading Time (minutes)
             </label>
             <input
@@ -283,13 +280,13 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
               min={0}
               value={formData.readingTime}
               onChange={(e) => setFormData(prev => ({ ...prev, readingTime: Number(e.target.value) }))}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               placeholder="0"
             />
           </div>
         </div>
         <div>
-          <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="metaDescription" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             SEO Description
           </label>
           <textarea
@@ -297,12 +294,12 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             value={formData.metaDescription}
             onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))}
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="Meta description for search engines"
           />
         </div>
         <div>
-          <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="keywords" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             SEO Keywords
           </label>
           <input
@@ -310,12 +307,12 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             id="keywords"
             value={formData.keywords}
             onChange={(e) => setFormData(prev => ({ ...prev, keywords: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="keyword1, keyword2, keyword3"
           />
         </div>
         <div>
-          <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="excerpt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Excerpt
           </label>
           <textarea
@@ -323,14 +320,14 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             value={formData.excerpt}
             onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
             rows={2}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="Short excerpt used in lists"
           />
         </div>
 
         {/* Content */}
         <div>
-          <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="content" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Content *
           </label>
           <textarea
@@ -338,7 +335,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             value={formData.content}
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
             rows={12}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="Write your blog content here... (Markdown supported)"
             required
           />
@@ -346,7 +343,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
 
         {/* Tags */}
         <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="tags" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Tags
           </label>
           <input
@@ -354,18 +351,18 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             id="tags"
             value={formData.tags}
             onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="tag1, tag2, tag3"
           />
         </div>
 
         {aiReferences.length > 0 && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
-            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">AI References</div>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-2">AI References</div>
+            <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
               {aiReferences.map((ref, index) => (
                 <li key={`${ref.url}-${index}`} className="break-all">
-                  <span className="font-medium text-gray-800 dark:text-gray-200">{ref.title}</span>
+                  <span className="font-medium text-zinc-800 dark:text-zinc-200">{ref.title}</span>
                   {ref.url ? ` - ${ref.url}` : ''}
                 </li>
               ))}
@@ -375,7 +372,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
 
         {/* Categories */}
         <div>
-          <label htmlFor="categories" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="categories" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Categories
           </label>
           <input
@@ -383,25 +380,27 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             id="categories"
             value={formData.categories}
             onChange={(e) => setFormData(prev => ({ ...prev, categories: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             placeholder="category1, category2"
           />
         </div>
 
         {/* Featured Image */}
         <div>
-          <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="featuredImage" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Featured Image
           </label>
           {formData.featuredImage && (
             <div className="mb-3">
+              {/* Preview of any URL the editor pastes; next/image would reject unknown hosts. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={formData.featuredImage}
                 alt="Featured"
-                className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                className="w-full h-48 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700"
               />
               {imageMeta?.bytes ? (
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
                   Size: {(imageMeta.bytes / 1024).toFixed(1)} KB
                   {imageMeta.width && imageMeta.height ? ` • ${imageMeta.width}x${imageMeta.height}` : ''}
                   {imageMeta.format ? ` • ${imageMeta.format.toUpperCase()}` : ''}
@@ -428,7 +427,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
                 setFormData(prev => ({ ...prev, featuredImage: e.target.value }));
                 setImageMeta(null);
               }}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               placeholder="Paste image link (optional)"
             />
             <div className="flex items-center gap-3">
@@ -436,11 +435,11 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                 disabled={uploading}
               />
               {uploading && (
-                <span className="text-sm text-blue-600">Uploading...</span>
+                <span className="text-sm text-brand-600">Uploading...</span>
               )}
             </div>
           </div>
@@ -453,9 +452,9 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
             id="published"
             checked={formData.published}
             onChange={(e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-zinc-300 rounded"
           />
-          <label htmlFor="published" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+          <label htmlFor="published" className="ml-2 block text-sm text-zinc-700 dark:text-zinc-300">
             Publish immediately
           </label>
         </div>
@@ -486,7 +485,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+            className="bg-brand-600 text-white px-8 py-3 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
           >
             {loading ? (
               <div className="flex items-center">
@@ -500,7 +499,7 @@ export default function AdminBlogEditor({ blog, onSave, onCancel, onClose, mode 
           <button
             type="button"
             onClick={onCancel || onClose}
-            className="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+            className="bg-zinc-600 text-white px-8 py-3 rounded-lg hover:bg-zinc-700 transition-colors font-semibold"
           >
             Cancel
           </button>

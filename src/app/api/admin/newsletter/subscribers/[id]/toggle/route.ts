@@ -1,41 +1,27 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import mongoose, { Schema, models, model } from 'mongoose';
+import NewsletterSubscriber from '@/models/NewsletterSubscriber';
 import { requirePermission } from '@/lib/adminAuth';
+import { badRequest, isObjectId, serverError } from '@/lib/security';
 
-// Newsletter Subscriber Schema
-const NewsletterSubscriberSchema = new Schema({
-  email: { type: String, required: true, unique: true },
-  name: { type: String },
-  subscribed: { type: Boolean, default: true },
-  subscribedAt: { type: Date, default: Date.now },
-  lastEmailSent: { type: Date },
-  tags: [{ type: String }],
-  source: { type: String }
-});
-
-const NewsletterSubscriber = models.NewsletterSubscriber || model('NewsletterSubscriber', NewsletterSubscriberSchema);
-
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  await dbConnect();
-
-  const { errorResponse } = requirePermission(req, 'manage_newsletter');
-  if (errorResponse) {
-    return errorResponse;
-  }
-
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const subscriber = await NewsletterSubscriber.findById(params.id);
+    const { errorResponse } = await requirePermission(req, 'manage_newsletter');
+    if (errorResponse) return errorResponse;
+
+    const { id } = await params;
+    if (!isObjectId(id)) return badRequest('Invalid ID');
+
+    await dbConnect();
+    const subscriber = await NewsletterSubscriber.findById(id);
     if (!subscriber) {
       return NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
     }
 
     subscriber.subscribed = !subscriber.subscribed;
     await subscriber.save();
-    
     return NextResponse.json(subscriber);
   } catch (error) {
-    console.error('Error toggling subscription:', error);
-    return NextResponse.json({ error: 'Failed to toggle subscription' }, { status: 500 });
+    return serverError('Error toggling subscription', error, 'Failed to toggle subscription');
   }
-} 
+}

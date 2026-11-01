@@ -1,99 +1,100 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Comment from '@/models/Comment';
-import { requireAdmin } from '@/lib/adminAuth';
+import Blog from '@/models/Blog';
+import { requirePermission } from '@/lib/adminAuth';
+import { moderateText } from '@/lib/gemini';
+import { badRequest, cleanString, isObjectId, limitRequest, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
-  await dbConnect();
-  const { blogId, content, authorName, authorEmail } = await req.json();
-  
-  if (!blogId || !content || !authorName) {
-    return NextResponse.json({ error: 'Blog ID, content, and author name are required' }, { status: 400 });
-  }
-
   try {
-    // Verify blog exists
-    const Blog = (await import('@/models/Blog')).default;
-    const blog = await Blog.findById(blogId);
-    if (!blog) {
-      return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
+    const limited = limitRequest(req, 'comment', 5, 10 * 60 * 1000);
+    if (limited) return limited;
+
+    const body = await readJsonBody(req, 16 * 1024);
+    if (!body) return badRequest();
+
+    // Honeypot field: real users never fill it, bots usually do.
+    if (cleanString(body.website, 200)) {
+      return NextResponse.json({ success: true, status: 'pending' });
     }
 
-    // AI moderation
-    let status = 'pending';
-    let flaggedReason = '';
-    try {
-      const res = await fetch(process.env.NEXT_PUBLIC_BASE_URL + '/api/ai/moderate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const mod = await res.json();
-      if (mod.verdict === 'flagged') {
-        status = 'flagged';
-        flaggedReason = mod.reason;
-      } else if (mod.verdict === 'needs review') {
-        status = 'pending';
-        flaggedReason = mod.reason;
-      } else {
-        status = 'approved';
-      }
-    } catch (error) {
-      console.error('AI moderation error:', error);
-      // Default to approved if moderation fails
-      status = 'approved';
+    const blogId = body.blogId;
+    const content = cleanString(body.content, 2000);
+    const authorName = cleanString(body.authorName, 60);
+    const authorEmail = body.authorEmail ? normalizeEmail(body.authorEmail) : '';
+
+    if (!isObjectId(blogId) || content.length < 2 || !authorName) {
+      return badRequest('Name and a comment are required');
+    }
+    if (body.authorEmail && !authorEmail) return badRequest('Please enter a valid email');
+
+    await dbConnect();
+    const blog = await Blog.findOne({ _id: blogId, published: true }).select('commentsEnabled');
+    if (!blog) return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
+    if (blog.commentsEnabled === false) {
+      return NextResponse.json({ error: 'Comments are closed for this post' }, { status: 403 });
     }
 
-    const comment = await Comment.create({ 
-      blog: blogId, 
+    const moderation = await moderateText(`${authorName}\n${content}`);
+    const status =
+      moderation.verdict === 'safe' ? 'approved' : moderation.verdict === 'flagged' ? 'flagged' : 'pending';
+
+    const comment = await Comment.create({
+      blog: blogId,
       authorName,
       authorEmail: authorEmail || undefined,
-      content, 
-      status, 
-      flaggedReason 
+      content,
+      status,
+      flaggedReason: moderation.reason,
     });
 
     return NextResponse.json({
       _id: comment._id,
       content: comment.content,
       authorName: comment.authorName,
-      authorEmail: comment.authorEmail,
       createdAt: comment.createdAt,
       status: comment.status,
     });
   } catch (error) {
-    console.error('Comment creation error:', error);
-    return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
+    return serverError('Comment creation error', error, 'Failed to post comment');
   }
 }
 
 export async function GET(req: Request) {
-  await dbConnect();
-  const url = new URL(req.url!);
-  const blogId = url.searchParams.get('blogId');
-  const isAdmin = url.searchParams.get('admin') === 'true';
+  try {
+    const url = new URL(req.url);
+    const blogId = url.searchParams.get('blogId');
+    const isAdmin = url.searchParams.get('admin') === 'true';
 
-  if (isAdmin) {
-    const { errorResponse } = requireAdmin(req);
-    if (errorResponse) {
-      return errorResponse;
+    await dbConnect();
+
+    if (isAdmin) {
+      const { errorResponse } = await requirePermission(req, 'manage_blogs');
+      if (errorResponse) return errorResponse;
+      const status = url.searchParams.get('status');
+      const filter = status && ['pending', 'approved', 'flagged', 'rejected'].includes(status) ? { status } : {};
+      const comments = await Comment.find(filter)
+        .populate('blog', 'title slug')
+        .sort({ createdAt: -1 })
+        .limit(500)
+        .lean();
+      return NextResponse.json({ comments }, { headers: { 'Cache-Control': 'no-store' } });
     }
-    const comments = await Comment.find()
-      .populate('blog', 'title')
-      .sort({ createdAt: -1 });
-    return NextResponse.json({ comments });
-  } else {
-    // Public request - get approved comments for a specific blog
-    if (!blogId) {
-      return NextResponse.json({ error: 'Blog ID is required' }, { status: 400 });
-    }
-    
-    const comments = await Comment.find({ 
-      blog: blogId, 
-      status: 'approved' 
-    })
-      .sort({ createdAt: -1 });
-    
-    return NextResponse.json({ comments });
+
+    if (!isObjectId(blogId)) return badRequest('Blog ID is required');
+
+    const comments = await Comment.find({ blog: blogId, status: 'approved' })
+      .select('authorName content createdAt status')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    return NextResponse.json(
+      { comments },
+      { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' } }
+    );
+  } catch (error) {
+    return serverError('Comment fetch error', error);
   }
 }

@@ -2,51 +2,49 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requireStaff } from '@/lib/adminAuth';
+import { badRequest, cleanString, limitRequest, readJsonBody, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
   try {
-    const { user, errorResponse } = requireAdmin(req);
-    if (errorResponse || !user) {
-      return errorResponse || NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    const { user, errorResponse } = await requireStaff(req);
+    if (errorResponse || !user) return errorResponse;
+
+    const limited = limitRequest(req, 'update-password', 5, 15 * 60 * 1000, user.id);
+    if (limited) return limited;
+
+    const body = await readJsonBody(req, 4 * 1024);
+    if (!body) return badRequest();
+
+    const currentPassword = cleanString(body.currentPassword, 200);
+    const newPassword = cleanString(body.newPassword, 200);
+
+    if (!currentPassword || !newPassword) {
+      return badRequest('Current and new password required');
+    }
+    if (newPassword.length < 8) {
+      return badRequest('New password must be at least 8 characters');
+    }
+    if (newPassword === currentPassword) {
+      return badRequest('New password must be different from the current password');
     }
 
     await dbConnect();
-    const { currentPassword, newPassword } = await req.json();
-
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json({ error: 'Current and new password required' }, { status: 400 });
-    }
-
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'New password must be at least 6 characters' }, { status: 400 });
-    }
-
-    const adminUser = await User.findById(user.id);
-    if (!adminUser || !adminUser.password) {
+    const staffUser = await User.findById(user.id);
+    if (!staffUser || !staffUser.password) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, adminUser.password);
+    const isValid = await bcrypt.compare(currentPassword, staffUser.password);
     if (!isValid) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
     }
 
-    // Update password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    adminUser.password = hashedPassword;
-    await adminUser.save();
+    staffUser.password = await bcrypt.hash(newPassword, 12);
+    await staffUser.save();
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Password updated successfully' 
-    });
-  } catch (error: any) {
-    console.error('Password update error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to update password' 
-    }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    return serverError('Password update error', error, 'Failed to update password');
   }
 }
-

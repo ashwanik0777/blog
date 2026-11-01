@@ -1,30 +1,26 @@
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/lib/adminAuth';
+import { geminiGenerateText } from '@/lib/gemini';
+import { badRequest, cleanString, limitRequest, readJsonBody, safeHttpUrl, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
-  const { errorResponse } = requirePermission(req, 'ai_content_generation');
-  if (errorResponse) {
-    return errorResponse;
-  }
-  const { imageUrl, context } = await req.json();
-  if (!imageUrl) {
-    return NextResponse.json({ error: 'Missing imageUrl' }, { status: 400 });
-  }
-  // Call Gemini API
-  const prompt = `Describe the following image in a concise, SEO-friendly alt text for a blog (max 125 characters).
-${context ? `Context: ${context}\n` : ''}Image URL: ${imageUrl}`;
-  const geminiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-  });
-  if (!geminiRes.ok) {
-    return NextResponse.json({ error: 'Gemini API error' }, { status: 500 });
-  }
-  const geminiData = await geminiRes.json();
-  let alt = '';
+  const { user, errorResponse } = await requirePermission(req, 'ai_content_generation');
+  if (errorResponse || !user) return errorResponse;
+
+  const limited = limitRequest(req, 'ai', 40, 10 * 60 * 1000, user.id);
+  if (limited) return limited;
+
+  const body = await readJsonBody(req, 16 * 1024);
+  const imageUrl = safeHttpUrl(body?.imageUrl);
+  const context = cleanString(body?.context, 500);
+  if (!imageUrl) return badRequest('Missing imageUrl');
+
   try {
-    alt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  } catch {}
-  return NextResponse.json({ altText: alt });
-} 
+    const prompt = `Describe the following image in a concise, SEO-friendly alt text for a blog (max 125 characters).
+${context ? `Context: ${context}\n` : ''}Image URL: ${imageUrl}`;
+    const alt = await geminiGenerateText(prompt);
+    return NextResponse.json({ altText: alt.trim().slice(0, 200) });
+  } catch (error) {
+    return serverError('Alt text error', error, 'AI service is temporarily unavailable');
+  }
+}

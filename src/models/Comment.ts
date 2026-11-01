@@ -24,4 +24,6 @@ const CommentSchema = new Schema<IComment>({
   createdAt: { type: Date, default: Date.now },
 });
 
+CommentSchema.index({ blog: 1, status: 1, createdAt: -1 });
+
 export default models.Comment || model<IComment>('Comment', CommentSchema);
