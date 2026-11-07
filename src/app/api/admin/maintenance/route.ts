@@ -4,6 +4,7 @@ import Blog from '@/models/Blog';
 import Comment from '@/models/Comment';
 import Issue from '@/models/Issue';
 import Newsletter from '@/models/Newsletter';
+import RateLimit from '@/models/RateLimit';
 import NewsletterSubscriber from '@/models/NewsletterSubscriber';
 import Settings from '@/models/Settings';
 import User from '@/models/User';
@@ -44,7 +45,7 @@ async function importFeaturedImages() {
 
 async function createIndexes() {
   // createIndexes only adds missing indexes — it never drops existing ones.
-  const models = [Blog, Comment, Issue, Newsletter, NewsletterSubscriber, Settings, User, Visitor];
+  const models = [Blog, Comment, Issue, Newsletter, NewsletterSubscriber, RateLimit, Settings, User, Visitor];
   await Promise.all(models.map((model) => model.createIndexes()));
   return NextResponse.json({ success: true, models: models.map((model) => model.modelName) });
 }

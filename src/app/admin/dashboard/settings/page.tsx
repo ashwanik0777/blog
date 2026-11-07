@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ interface WebsiteSettings {
 }
 
 export default function SettingsPage() {
+  const toast = useToast();
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -108,13 +110,13 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('Settings saved successfully!');
+        toast.success('Settings saved successfully!');
       } else {
-        alert('Failed to save settings');
+        toast.error(await errorMessage(response, 'Failed to save settings'));
       }
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert('Error saving settings');
+      toast.error('Something went wrong while saving settings. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

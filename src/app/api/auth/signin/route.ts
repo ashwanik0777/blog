@@ -5,6 +5,7 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { ALL_PERMISSIONS, createAdminSessionToken, setAdminSessionCookie } from '@/lib/adminAuth';
 import { badRequest, cleanString, limitRequest, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
+import { persistentLimit, persistentLimitByKey, persistentPeekByKey } from '@/lib/persistentRateLimit';
 
 // Used to keep response times similar when the account does not exist.
 const DUMMY_HASH = '$2b$12$9FGGAz6ZavRc6Q6K7D3yX.dWwsJcFcexinlR..g4KqYimHm3uIc3q';
@@ -17,9 +18,14 @@ function safeEqual(a: string, b: string) {
 
 const invalidCredentials = () => NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
 
+const FAILED_ATTEMPTS_PER_ACCOUNT = 10;
+const ACCOUNT_WINDOW_MS = 60 * 60 * 1000;
+
 export async function POST(req: Request) {
   try {
-    const limited = limitRequest(req, 'signin', 5, 15 * 60 * 1000);
+    // Fast in-memory check first, then the limit shared by all server instances.
+    const limited =
+      limitRequest(req, 'signin', 5, 15 * 60 * 1000) || (await persistentLimit(req, 'signin', 5, 15 * 60 * 1000));
     if (limited) return limited;
 
     const body = await readJsonBody(req, 4 * 1024);
@@ -31,8 +37,14 @@ export async function POST(req: Request) {
       return badRequest('Email and password are required');
     }
 
-    const perAccount = limitRequest(req, 'signin-account', 10, 60 * 60 * 1000, email);
-    if (perAccount) return perAccount;
+    // Failed attempts are counted per account (not per IP), so rotating IPs does not help an attacker.
+    const accountKey = `signin-failed:${email}`;
+    const blocked = await persistentPeekByKey(accountKey, FAILED_ATTEMPTS_PER_ACCOUNT);
+    if (blocked) return blocked;
+    const failed = async () => {
+      await persistentLimitByKey(accountKey, FAILED_ATTEMPTS_PER_ACCOUNT, ACCOUNT_WINDOW_MS);
+      return invalidCredentials();
+    };
 
     await dbConnect();
 
@@ -43,7 +55,7 @@ export async function POST(req: Request) {
 
     if (staffUser) {
       const isValid = await bcrypt.compare(password, staffUser.password || DUMMY_HASH);
-      if (!isValid || !staffUser.password) return invalidCredentials();
+      if (!isValid || !staffUser.password) return failed();
       if (staffUser.disabled) {
         return NextResponse.json({ error: 'This account has been disabled' }, { status: 403 });
       }
@@ -60,7 +72,7 @@ export async function POST(req: Request) {
         safeEqual(password, adminPassword) &&
         (await User.countDocuments({ role: 'admin' })) === 0;
 
-      if (!canBootstrap) return invalidCredentials();
+      if (!canBootstrap) return failed();
 
       staffUser = await User.create({
         name: process.env.ADMIN_NAME || 'Admin',

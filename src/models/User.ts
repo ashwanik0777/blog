@@ -9,6 +9,7 @@ export interface IUser extends Document {
   emailVerified?: Date;
   image?: string;
   disabled: boolean;
+  passwordChangedAt?: Date;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -20,6 +21,8 @@ const UserSchema = new Schema<IUser>({
   emailVerified: { type: Date },
   image: { type: String },
   disabled: { type: Boolean, default: false },
+  // Sessions issued before this moment are rejected (logs out other devices on password change).
+  passwordChangedAt: { type: Date },
 }, { timestamps: true });
 
 export default models.User || model<IUser>('User', UserSchema);

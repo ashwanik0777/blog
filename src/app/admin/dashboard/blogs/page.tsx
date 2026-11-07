@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,8 @@ interface Blog {
 }
 
 export default function BlogManagementPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -82,7 +85,7 @@ export default function BlogManagementPage() {
 
 
   async function handleDelete(blogId: string) {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!(await askConfirm({ title: 'Delete this blog post?', message: 'The post and all of its comments will be permanently removed. This cannot be undone.', confirmLabel: 'Delete post', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/blog/${blogId}`, {
@@ -91,13 +94,13 @@ export default function BlogManagementPage() {
 
       if (response.ok) {
         setBlogs(blogs.filter(blog => blog._id !== blogId));
-        alert('Blog deleted successfully!');
+        toast.success('Blog deleted successfully!');
       } else {
-        alert('Failed to delete blog');
+        toast.error(await errorMessage(response, 'Failed to delete blog'));
       }
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('Error deleting blog');
+      toast.error('Something went wrong while deleting blog. Please check your connection and try again.');
     }
   }
 
@@ -119,13 +122,13 @@ export default function BlogManagementPage() {
             ? { ...b, published: !b.published, status: !b.published ? 'approved' : 'draft' }
             : b
         ));
-        alert(`Blog ${!blog.published ? 'published' : 'unpublished'} successfully!`);
+        toast.success(`Blog ${!blog.published ? 'published' : 'unpublished'} successfully!`);
       } else {
-        alert('Failed to update blog status');
+        toast.error(await errorMessage(response, 'Failed to update blog status'));
       }
     } catch (error) {
       console.error('Error updating blog:', error);
-      alert('Error updating blog status');
+      toast.error('Something went wrong while updating blog status. Please check your connection and try again.');
     }
   }
 
@@ -141,13 +144,13 @@ export default function BlogManagementPage() {
         setBlogs(blogs.map(b => b._id === updatedBlog._id ? updatedBlog : b));
         setShowEditor(false);
         setEditingBlog(null);
-        alert('Blog updated successfully!');
+        toast.success('Blog updated successfully!');
       } else {
-        alert('Failed to update blog');
+        toast.error(await errorMessage(response, 'Failed to update blog'));
       }
     } catch (error) {
       console.error('Error updating blog:', error);
-      alert('Error updating blog');
+      toast.error('Something went wrong while updating blog. Please check your connection and try again.');
     }
   }
 
@@ -173,13 +176,13 @@ export default function BlogManagementPage() {
         const createdBlog = await response.json();
         setBlogs([createdBlog, ...blogs]);
         setShowEditor(false);
-        alert('Blog created successfully!');
+        toast.success('Blog created successfully!');
       } else {
-        alert('Failed to create blog');
+        toast.error(await errorMessage(response, 'Failed to create blog'));
       }
     } catch (error) {
       console.error('Error creating blog:', error);
-      alert('Error creating blog');
+      toast.error('Something went wrong while creating blog. Please check your connection and try again.');
     }
   }
 
@@ -450,7 +453,7 @@ export default function BlogManagementPage() {
 
       {/* Blog Editor Modal */}
       {showEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <AdminBlogEditor
               blog={editingBlog || undefined}

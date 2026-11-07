@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -43,6 +44,8 @@ interface Blog {
 }
 
 export default function AdminDashboard() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const router = useRouter();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +114,7 @@ export default function AdminDashboard() {
   }
 
   async function handleDelete(blogId: string) {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!(await askConfirm({ title: 'Delete this blog post?', message: 'The post and all of its comments will be permanently removed. This cannot be undone.', confirmLabel: 'Delete post', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/blog/${blogId}`, {
@@ -120,13 +123,13 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         setBlogs(blogs.filter(blog => blog._id !== blogId));
-        alert('Blog deleted successfully!');
+        toast.success('Blog deleted successfully!');
       } else {
-        alert('Failed to delete blog');
+        toast.error(await errorMessage(response, 'Failed to delete blog'));
       }
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('Error deleting blog');
+      toast.error('Something went wrong while deleting blog. Please check your connection and try again.');
     }
   }
 

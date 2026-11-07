@@ -5,10 +5,12 @@ import Blog from '@/models/Blog';
 import { requirePermission } from '@/lib/adminAuth';
 import { moderateText } from '@/lib/gemini';
 import { badRequest, cleanString, isObjectId, limitRequest, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
+import { persistentLimit } from '@/lib/persistentRateLimit';
 
 export async function POST(req: Request) {
   try {
-    const limited = limitRequest(req, 'comment', 5, 10 * 60 * 1000);
+    const limited =
+      limitRequest(req, 'comment', 5, 10 * 60 * 1000) || (await persistentLimit(req, 'comment', 10, 60 * 60 * 1000));
     if (limited) return limited;
 
     const body = await readJsonBody(req, 16 * 1024);

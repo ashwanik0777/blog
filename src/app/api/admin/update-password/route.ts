@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { requireStaff } from '@/lib/adminAuth';
+import { createAdminSessionToken, requireStaff, setAdminSessionCookie } from '@/lib/adminAuth';
 import { badRequest, cleanString, limitRequest, readJsonBody, serverError } from '@/lib/security';
 
 export async function POST(req: Request) {
@@ -41,9 +41,19 @@ export async function POST(req: Request) {
     }
 
     staffUser.password = await bcrypt.hash(newPassword, 12);
+    staffUser.passwordChangedAt = new Date();
     await staffUser.save();
 
-    return NextResponse.json({ success: true, message: 'Password updated successfully' });
+    // Every other session is now invalid; keep this browser signed in with a fresh token.
+    const response = NextResponse.json({
+      success: true,
+      message: 'Password updated. You have been signed out on all other devices.',
+    });
+    setAdminSessionCookie(
+      response,
+      createAdminSessionToken({ id: user.id, email: user.email, name: user.name, role: user.role })
+    );
+    return response;
   } catch (error) {
     return serverError('Password update error', error, 'Failed to update password');
   }

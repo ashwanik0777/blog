@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,8 @@ interface SubAdmin {
 }
 
 export default function SubAdminsPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -103,13 +106,13 @@ export default function SubAdminsPage() {
         setSubAdmins([newSubAdmin, ...subAdmins]);
         setShowCreateModal(false);
         resetForm();
-        alert('Sub-admin created successfully!');
+        toast.success('Sub-admin created successfully!');
       } else {
-        alert('Failed to create sub-admin');
+        toast.error(await errorMessage(response, 'Failed to create sub-admin'));
       }
     } catch (error) {
       console.error('Error creating sub-admin:', error);
-      alert('Error creating sub-admin');
+      toast.error('Something went wrong while creating sub-admin. Please check your connection and try again.');
     }
   }
 
@@ -128,18 +131,18 @@ export default function SubAdminsPage() {
         setSubAdmins(subAdmins.map(sa => sa._id === editingSubAdmin._id ? updatedSubAdmin : sa));
         setEditingSubAdmin(null);
         resetForm();
-        alert('Sub-admin updated successfully!');
+        toast.success('Sub-admin updated successfully!');
       } else {
-        alert('Failed to update sub-admin');
+        toast.error(await errorMessage(response, 'Failed to update sub-admin'));
       }
     } catch (error) {
       console.error('Error updating sub-admin:', error);
-      alert('Error updating sub-admin');
+      toast.error('Something went wrong while updating sub-admin. Please check your connection and try again.');
     }
   }
 
   async function handleDeleteSubAdmin(subAdminId: string) {
-    if (!confirm('Are you sure you want to delete this sub-admin?')) return;
+    if (!(await askConfirm({ title: 'Delete this sub-admin?', message: 'They will lose access to the dashboard immediately. This cannot be undone.', confirmLabel: 'Delete sub-admin', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/admin/sub-admins/${subAdminId}`, {
@@ -148,13 +151,13 @@ export default function SubAdminsPage() {
 
       if (response.ok) {
         setSubAdmins(subAdmins.filter(sa => sa._id !== subAdminId));
-        alert('Sub-admin deleted successfully!');
+        toast.success('Sub-admin deleted successfully!');
       } else {
-        alert('Failed to delete sub-admin');
+        toast.error(await errorMessage(response, 'Failed to delete sub-admin'));
       }
     } catch (error) {
       console.error('Error deleting sub-admin:', error);
-      alert('Error deleting sub-admin');
+      toast.error('Something went wrong while deleting sub-admin. Please check your connection and try again.');
     }
   }
 
@@ -167,13 +170,13 @@ export default function SubAdminsPage() {
       if (response.ok) {
         const updatedSubAdmin = await response.json();
         setSubAdmins(subAdmins.map(sa => sa._id === subAdmin._id ? updatedSubAdmin : sa));
-        alert(`Sub-admin ${subAdmin.status === 'active' ? 'deactivated' : 'activated'} successfully!`);
+        toast.success(`Sub-admin ${subAdmin.status === 'active' ? 'deactivated' : 'activated'} successfully!`);
       } else {
-        alert('Failed to update sub-admin status');
+        toast.error(await errorMessage(response, 'Failed to update sub-admin status'));
       }
     } catch (error) {
       console.error('Error updating sub-admin status:', error);
-      alert('Error updating sub-admin status');
+      toast.error('Something went wrong while updating sub-admin status. Please check your connection and try again.');
     }
   }
 
@@ -453,7 +456,7 @@ export default function SubAdminsPage() {
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingSubAdmin) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">

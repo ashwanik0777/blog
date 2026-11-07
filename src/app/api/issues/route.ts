@@ -3,12 +3,14 @@ import dbConnect from '@/lib/mongodb';
 import Issue from '@/models/Issue';
 import { requirePermission } from '@/lib/adminAuth';
 import { badRequest, cleanString, limitRequest, normalizeEmail, readJsonBody, serverError } from '@/lib/security';
+import { persistentLimit } from '@/lib/persistentRateLimit';
 
 const STATUSES = ['pending', 'resolved', 'closed'];
 
 export async function POST(req: Request) {
   try {
-    const limited = limitRequest(req, 'issue', 3, 15 * 60 * 1000);
+    const limited =
+      limitRequest(req, 'issue', 3, 15 * 60 * 1000) || (await persistentLimit(req, 'issue', 5, 60 * 60 * 1000));
     if (limited) return limited;
 
     const body = await readJsonBody(req, 16 * 1024);

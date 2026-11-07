@@ -1,4 +1,5 @@
 "use client";
+import { useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import { useState, useEffect, useMemo } from "react";
 import { AlertCircle, CheckCircle, XCircle, Clock, Mail, User, MessageSquare, Search, Trash2, Eye } from "lucide-react";
 
@@ -17,6 +18,8 @@ interface Issue {
 }
 
 export default function IssuesPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,14 +84,14 @@ export default function IssuesPage() {
       }
     } catch (error) {
       console.error('Error updating issue:', error);
-      alert('Failed to update issue');
+      toast.error('Failed to update issue');
     } finally {
       setUpdating(false);
     }
   }
 
   async function deleteIssue(issueId: string) {
-    if (!confirm('Are you sure you want to delete this issue?')) return;
+    if (!(await askConfirm({ title: 'Delete this issue?', message: 'The report will be permanently removed.', confirmLabel: 'Delete issue', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/issues/${issueId}`, {
@@ -103,7 +106,7 @@ export default function IssuesPage() {
       }
     } catch (error) {
       console.error('Error deleting issue:', error);
-      alert('Failed to delete issue');
+      toast.error('Failed to delete issue');
     }
   }
 

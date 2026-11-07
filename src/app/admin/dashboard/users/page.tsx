@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,8 @@ interface User {
 }
 
 export default function UserManagementPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -119,13 +122,13 @@ export default function UserManagementPage() {
         setUsers([newUser, ...users]);
         setShowCreateModal(false);
         resetForm();
-        alert('User created successfully!');
+        toast.success('User created successfully!');
       } else {
-        alert('Failed to create user');
+        toast.error(await errorMessage(response, 'Failed to create user'));
       }
     } catch (error) {
       console.error('Error creating user:', error);
-      alert('Error creating user');
+      toast.error('Something went wrong while creating user. Please check your connection and try again.');
     }
   }
 
@@ -144,18 +147,18 @@ export default function UserManagementPage() {
         setUsers(users.map(u => u._id === editingUser._id ? updatedUser : u));
         setEditingUser(null);
         resetForm();
-        alert('User updated successfully!');
+        toast.success('User updated successfully!');
       } else {
-        alert('Failed to update user');
+        toast.error(await errorMessage(response, 'Failed to update user'));
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Error updating user');
+      toast.error('Something went wrong while updating user. Please check your connection and try again.');
     }
   }
 
   async function handleDeleteUser(userId: string) {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!(await askConfirm({ title: 'Delete this staff account?', message: 'They will lose access to the dashboard immediately. This cannot be undone.', confirmLabel: 'Delete account', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -164,13 +167,13 @@ export default function UserManagementPage() {
 
       if (response.ok) {
         setUsers(users.filter(u => u._id !== userId));
-        alert('User deleted successfully!');
+        toast.success('User deleted successfully!');
       } else {
-        alert('Failed to delete user');
+        toast.error(await errorMessage(response, 'Failed to delete user'));
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Error deleting user');
+      toast.error('Something went wrong while deleting user. Please check your connection and try again.');
     }
   }
 
@@ -183,13 +186,13 @@ export default function UserManagementPage() {
       if (response.ok) {
         const updatedUser = await response.json();
         setUsers(users.map(u => u._id === user._id ? updatedUser : u));
-        alert(`User ${user.disabled ? 'activated' : 'deactivated'} successfully!`);
+        toast.success(`User ${user.disabled ? 'activated' : 'deactivated'} successfully!`);
       } else {
-        alert('Failed to update user status');
+        toast.error(await errorMessage(response, 'Failed to update user status'));
       }
     } catch (error) {
       console.error('Error updating user status:', error);
-      alert('Error updating user status');
+      toast.error('Something went wrong while updating user status. Please check your connection and try again.');
     }
   }
 
@@ -505,7 +508,7 @@ export default function UserManagementPage() {
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingUser) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">

@@ -11,6 +11,8 @@ export type AdminSessionUser = {
   name?: string;
   role: StaffRole;
   permissions?: string[];
+  /** Token issue time in seconds (JWT `iat`), only present on decoded sessions. */
+  issuedAt?: number;
 };
 
 export const ALL_PERMISSIONS = [
@@ -78,6 +80,7 @@ export function getAdminSessionFromRequest(req: Request): AdminSessionUser | nul
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,
+      issuedAt: decoded.iat,
     };
   } catch {
     return null;
@@ -93,16 +96,22 @@ export async function getVerifiedStaff(req: Request): Promise<AdminSessionUser |
   if (!session) return null;
 
   await dbConnect();
-  const user = await User.findById(session.id).select('name email role permissions disabled').lean<{
+  const user = await User.findById(session.id).select('name email role permissions disabled passwordChangedAt').lean<{
     _id: unknown;
     name?: string;
     email: string;
     role: StaffRole;
     permissions?: string[];
     disabled?: boolean;
+    passwordChangedAt?: Date;
   }>();
 
   if (!user || user.disabled || !['admin', 'sub-admin', 'editor'].includes(user.role)) return null;
+
+  // Tokens issued before the last password change are no longer valid.
+  if (user.passwordChangedAt && (session.issuedAt ?? 0) < Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)) {
+    return null;
+  }
 
   return {
     id: String(user._id),

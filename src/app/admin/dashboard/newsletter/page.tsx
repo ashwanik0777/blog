@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage, useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import type { AdminSessionUser } from "@/types/admin";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -42,6 +43,8 @@ interface Newsletter {
 }
 
 export default function NewsletterPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<AdminSessionUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -125,19 +128,19 @@ export default function NewsletterPage() {
         setNewsletters([newNewsletter, ...newsletters]);
         setShowCreateNewsletter(false);
         resetNewsletterForm();
-        alert('Newsletter created successfully!');
+        toast.success('Newsletter created successfully!');
       } else {
-        alert('Failed to create newsletter');
+        toast.error(await errorMessage(response, 'Failed to create newsletter'));
       }
     } catch (error) {
       console.error('Error creating newsletter:', error);
-      alert('Error creating newsletter');
+      toast.error('Something went wrong while creating newsletter. Please check your connection and try again.');
     }
   }
 
   async function handleSendNewsletter(newsletter: Newsletter) {
     const activeCount = subscribers.filter(s => s.subscribed).length;
-    if (!confirm(`Send "${newsletter.subject}" to ${activeCount} active subscriber(s) now? This cannot be undone.`)) return;
+    if (!(await askConfirm({ title: `Send "${newsletter.subject}"?`, message: `It will be emailed to ${activeCount} active subscriber(s) right away. Sent emails cannot be recalled.`, confirmLabel: 'Send now' }))) return;
 
     setSendingId(newsletter._id);
     try {
@@ -149,13 +152,13 @@ export default function NewsletterPage() {
       if (response.ok) {
         setNewsletters(newsletters.map(n => n._id === newsletter._id ? data : n));
         const delivery = data.delivery || {};
-        alert(`Newsletter sent to ${delivery.sent ?? 0} subscriber(s)${delivery.failed ? `, ${delivery.failed} failed` : ''}.`);
+        toast.success(`Newsletter sent to ${delivery.sent ?? 0} subscriber(s)${delivery.failed ? `, ${delivery.failed} failed` : ''}.`);
       } else {
-        alert(data.error || 'Failed to send newsletter');
+        toast.error(data.error || 'Failed to send newsletter');
       }
     } catch (error) {
       console.error('Error sending newsletter:', error);
-      alert('Error sending newsletter');
+      toast.error('Something went wrong while sending newsletter. Please check your connection and try again.');
     } finally {
       setSendingId(null);
     }
@@ -176,18 +179,18 @@ export default function NewsletterPage() {
         setSubscribers([newSubscriber, ...subscribers]);
         setShowCreateSubscriber(false);
         resetSubscriberForm();
-        alert('Subscriber added successfully!');
+        toast.success('Subscriber added successfully!');
       } else {
-        alert('Failed to add subscriber');
+        toast.error(await errorMessage(response, 'Failed to add subscriber'));
       }
     } catch (error) {
       console.error('Error adding subscriber:', error);
-      alert('Error adding subscriber');
+      toast.error('Something went wrong while adding subscriber. Please check your connection and try again.');
     }
   }
 
   async function handleDeleteSubscriber(subscriberId: string) {
-    if (!confirm('Are you sure you want to delete this subscriber?')) return;
+    if (!(await askConfirm({ title: 'Remove this subscriber?', message: 'They will be deleted from your list and will no longer receive newsletters.', confirmLabel: 'Remove', tone: 'danger' }))) return;
 
     try {
       const response = await fetch(`/api/admin/newsletter/subscribers/${subscriberId}`, {
@@ -196,13 +199,13 @@ export default function NewsletterPage() {
 
       if (response.ok) {
         setSubscribers(subscribers.filter(s => s._id !== subscriberId));
-        alert('Subscriber deleted successfully!');
+        toast.success('Subscriber deleted successfully!');
       } else {
-        alert('Failed to delete subscriber');
+        toast.error(await errorMessage(response, 'Failed to delete subscriber'));
       }
     } catch (error) {
       console.error('Error deleting subscriber:', error);
-      alert('Error deleting subscriber');
+      toast.error('Something went wrong while deleting subscriber. Please check your connection and try again.');
     }
   }
 
@@ -215,13 +218,13 @@ export default function NewsletterPage() {
       if (response.ok) {
         const updatedSubscriber = await response.json();
         setSubscribers(subscribers.map(s => s._id === subscriber._id ? updatedSubscriber : s));
-        alert(`Subscriber ${subscriber.subscribed ? 'unsubscribed' : 'subscribed'} successfully!`);
+        toast.success(`Subscriber ${subscriber.subscribed ? 'unsubscribed' : 'subscribed'} successfully!`);
       } else {
-        alert('Failed to update subscription');
+        toast.error(await errorMessage(response, 'Failed to update subscription'));
       }
     } catch (error) {
       console.error('Error updating subscription:', error);
-      alert('Error updating subscription');
+      toast.error('Something went wrong while updating subscription. Please check your connection and try again.');
     }
   }
 
@@ -609,7 +612,7 @@ export default function NewsletterPage() {
 
       {/* Create Newsletter Modal */}
       {showCreateNewsletter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
@@ -713,7 +716,7 @@ export default function NewsletterPage() {
 
       {/* Create Subscriber Modal */}
       {showCreateSubscriber && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">

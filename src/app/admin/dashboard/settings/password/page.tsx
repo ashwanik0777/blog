@@ -76,7 +76,7 @@ export default function PasswordUpdatePage() {
               <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
               <div>
                 <p className="text-green-800 dark:text-green-200 font-medium">Password updated successfully!</p>
-                <p className="text-green-700 dark:text-green-300 text-sm mt-1">Your password has been changed.</p>
+                <p className="text-green-700 dark:text-green-300 text-sm mt-1">Your password has been changed and all other devices have been signed out.</p>
               </div>
             </div>
           )}

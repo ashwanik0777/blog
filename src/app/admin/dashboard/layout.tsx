@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { AdminFeedbackProvider } from "@/components/admin/AdminFeedback";
 
 interface MenuItem {
   href: string;
@@ -143,93 +144,95 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="flex h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {mobileOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+    <AdminFeedbackProvider>
+      <div className="flex h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+        {mobileOpen && (
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
 
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white transition-all duration-300 lg:static lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } ${collapsed ? "lg:w-[76px]" : "lg:w-64"}`}
-      >
-        <div className={`flex h-16 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 ${collapsed ? "lg:justify-center" : "justify-between"}`}>
-          <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200 dark:ring-zinc-700">
-              <Image src="/logo.png" alt="" width={36} height={36} />
-            </span>
-            <span className={`font-display text-base font-extrabold ${collapsed ? "lg:hidden" : ""}`}>
-              Admin<span className="text-accent">Panel</span>
-            </span>
-          </Link>
-          <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-zinc-500 lg:hidden" aria-label="Close menu">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white transition-all duration-300 lg:static lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900 ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          } ${collapsed ? "lg:w-[76px]" : "lg:w-64"}`}
+        >
+          <div className={`flex h-16 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 ${collapsed ? "lg:justify-center" : "justify-between"}`}>
+            <Link href="/admin/dashboard" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200 dark:ring-zinc-700">
+                <Image src="/logo.png" alt="" width={36} height={36} />
+              </span>
+              <span className={`font-display text-base font-extrabold ${collapsed ? "lg:hidden" : ""}`}>
+                Admin<span className="text-accent">Panel</span>
+              </span>
+            </Link>
+            <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-zinc-500 lg:hidden" aria-label="Close menu">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-        {nav}
+          {nav}
 
-        <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
-          <div className={`flex items-center gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60 ${collapsed ? "lg:justify-center lg:bg-transparent lg:p-1 dark:lg:bg-transparent" : ""}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/60 text-sm font-bold text-brand-700 dark:text-brand-200">
-              {staff.name.charAt(0).toUpperCase()}
-            </span>
-            <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-              <p className="truncate text-sm font-semibold">{staff.name}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{ROLE_LABELS[staff.role] || "Staff"}</p>
+          <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+            <div className={`flex items-center gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60 ${collapsed ? "lg:justify-center lg:bg-transparent lg:p-1 dark:lg:bg-transparent" : ""}`}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/60 text-sm font-bold text-brand-700 dark:text-brand-200">
+                {staff.name.charAt(0).toUpperCase()}
+              </span>
+              <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
+                <p className="truncate text-sm font-semibold">{staff.name}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">{ROLE_LABELS[staff.role] || "Staff"}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Log out"
+                aria-label="Log out"
+                className={`rounded-lg p-2 text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 ${collapsed ? "lg:hidden" : ""}`}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
             <button
               type="button"
-              onClick={handleLogout}
-              title="Log out"
-              aria-label="Log out"
-              className={`rounded-lg p-2 text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 ${collapsed ? "lg:hidden" : ""}`}
+              onClick={() => setCollapsed((value) => !value)}
+              className="mt-2 hidden w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 lg:flex dark:hover:bg-zinc-800"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <LogOut className="h-4 w-4" />
+              {collapsed ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4" /> Collapse</>}
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed((value) => !value)}
-            className="mt-2 hidden w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 lg:flex dark:hover:bg-zinc-800"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4" /> Collapse</>}
-          </button>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-white/80 px-4 backdrop-blur-xl sm:px-6 dark:border-zinc-800 dark:bg-zinc-900/80">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 lg:hidden dark:border-zinc-800"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <h1 className="truncate font-display text-lg font-bold">{current?.label || "Dashboard"}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/" target="_blank" className="btn-ghost hidden px-3 py-2 sm:inline-flex">
+                <ExternalLink className="h-4 w-4" /> View site
+              </Link>
+              <ThemeToggle />
+              <button type="button" onClick={handleLogout} className="btn-ghost px-3 py-2 lg:hidden" aria-label="Log out">
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto">{forbidden ? null : children}</main>
         </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-white/80 px-4 backdrop-blur-xl sm:px-6 dark:border-zinc-800 dark:bg-zinc-900/80">
-          <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 lg:hidden dark:border-zinc-800"
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <h1 className="truncate font-display text-lg font-bold">{current?.label || "Dashboard"}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/" target="_blank" className="btn-ghost hidden px-3 py-2 sm:inline-flex">
-              <ExternalLink className="h-4 w-4" /> View site
-            </Link>
-            <ThemeToggle />
-            <button type="button" onClick={handleLogout} className="btn-ghost px-3 py-2 lg:hidden" aria-label="Log out">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto">{forbidden ? null : children}</main>
       </div>
-    </div>
+    </AdminFeedbackProvider>
   );
 }

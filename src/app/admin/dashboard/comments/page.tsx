@@ -1,4 +1,5 @@
 "use client";
+import { useConfirm, useToast } from "@/components/admin/AdminFeedback";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Clock, ExternalLink, Flag, Loader2, MessageSquare, Search, Trash2, XCircle } from "lucide-react";
@@ -32,6 +33,8 @@ const STATUS_STYLES: Record<CommentStatus, string> = {
 };
 
 export default function CommentsModerationPage() {
+  const toast = useToast();
+  const askConfirm = useConfirm();
   const [comments, setComments] = useState<AdminComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -84,21 +87,21 @@ export default function CommentsModerationPage() {
       if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || "Update failed");
       setComments((current) => current.map((item) => (item._id === comment._id ? { ...item, status } : item)));
     } catch (updateError) {
-      alert(updateError instanceof Error ? updateError.message : "Update failed");
+      toast.error(updateError instanceof Error ? updateError.message : "Update failed");
     } finally {
       setBusyId(null);
     }
   }
 
   async function remove(comment: AdminComment) {
-    if (!confirm(`Delete this comment by ${comment.authorName}? This cannot be undone.`)) return;
+    if (!(await askConfirm({ title: 'Delete this comment?', message: `The comment by ${comment.authorName} will be permanently removed.`, confirmLabel: 'Delete comment', tone: 'danger' }))) return;
     setBusyId(comment._id);
     try {
       const response = await fetch(`/api/comments/${comment._id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Delete failed");
       setComments((current) => current.filter((item) => item._id !== comment._id));
     } catch {
-      alert("Failed to delete comment");
+      toast.error("Failed to delete comment");
     } finally {
       setBusyId(null);
     }

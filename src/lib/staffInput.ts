@@ -111,7 +111,10 @@ export async function updateStaff(req: Request, id: string) {
       role: input.role,
       permissions: input.permissions,
     };
-    if (input.password) updateData.password = await bcrypt.hash(input.password, 12);
+    if (input.password) {
+      updateData.password = await bcrypt.hash(input.password, 12);
+      updateData.passwordChangedAt = new Date();
+    }
 
     const updatedUser = await User.findByIdAndUpdate(target._id, { $set: updateData }, { new: true }).select('-password');
     return NextResponse.json(updatedUser);
